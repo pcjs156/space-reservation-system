@@ -1,0 +1,64 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>무인 공간 예약 시스템</title>
+    <link href="{% static 'bootstrap-5.0.2-dist/css/bootstrap.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'bootstrap-5.0.2-dist/css/bootstrap-grid.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'bootstrap-5.0.2-dist/css/bootstrap-reboot.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'bootstrap-5.0.2-dist/css/bootstrap-utilities.css' %}" rel="stylesheet" type="text/css">
+
+    <script type="text/javascript" src="{% static 'bootstrap-5.0.2-dist/js/bootstrap.bundle.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap-5.0.2-dist/js/bootstrap.esm.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap-5.0.2-dist/js/bootstrap.js' %}"></script>
+
+    <link href="{% static 'commons/css/base.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'users/css/login.css' %}" rel="stylesheet" type="text/css">
+</head>
+<body>
+<main class="form-signin">
+    <form action="{% url 'users:login' %}" method="post">
+        {% csrf_token %}
+        {% if error_message %}
+            <div style="text-align: center">
+                <img id="logo-image" src="{% static 'commons/img/logo_transparent_warning.png' %}" alt="">
+            </div>
+            <h1 style="text-align: center" class="lead mb-3 fw-normal">{{ error_message }}</h1>
+        {% else %}
+            <div style="text-align: center">
+                <img id="logo-image" src="{% static 'commons/img/logo_transparent.png' %}" alt="">
+            </div>
+            <h1 style="text-align: center" class="lead mb-3 fw-normal">Welcome!</h1>
+        {% endif %}
+
+        <div class="form-floating">
+            <input required type="text" class="form-control" id="floatingInput" name="username">
+            <label for="floatingInput">ID</label>
+        </div>
+        <div class="form-floating">
+            <input required type="password" class="form-control" id="floatingPassword" name="password">
+            <label for="floatingPassword">Password</label>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="w-50 btn btn-sm btn-primary" type="submit">Sign in</button>
+        </div>
+    </form>
+    <div style="text-align: center;">
+        <a href="http://www.naver.com">
+            <button class="w-50 btn btn-sm btn-success" style="margin-top: 10px;">Sign Up</button>
+        </a>
+    </div>
+    <p class="mt-5 mb-3 text-muted">
+    <div class="text-muted" style="text-align: center;">
+        Copyright &copy; 2017–2021
+    </div>
+    <div class="text-muted" style="text-align: center;">
+        Bootstrap all rights reserved.
+    </div>
+    </p>
+</main>
+</body>
+</html>
