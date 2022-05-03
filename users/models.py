@@ -17,6 +17,9 @@ class SystemUser(AbstractUser):
     groups = None
     user_permissions = None
 
+    # 그룹에서 중복되지 않는 경우 기본적으로 사용할 닉네임
+    nickname = models.CharField('닉네임', max_length=30, blank=False, null=False)
+
     class Meta:
         verbose_name = '사용자'
         verbose_name_plural = '사용자 목록'
