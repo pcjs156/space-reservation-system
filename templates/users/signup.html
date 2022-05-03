@@ -1,0 +1,85 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>무인 공간 예약 시스템</title>
+    <link href="{% static 'bootstrap-5.0.2-dist/css/bootstrap.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'bootstrap-5.0.2-dist/css/bootstrap-grid.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'bootstrap-5.0.2-dist/css/bootstrap-reboot.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'bootstrap-5.0.2-dist/css/bootstrap-utilities.css' %}" rel="stylesheet" type="text/css">
+
+    <script type="text/javascript" src="{% static 'bootstrap-5.0.2-dist/js/bootstrap.bundle.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap-5.0.2-dist/js/bootstrap.esm.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap-5.0.2-dist/js/bootstrap.js' %}"></script>
+
+    <link href="{% static 'commons/css/base.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'users/css/signup.css' %}" rel="stylesheet" type="text/css">
+</head>
+<body>
+<main class="form-signup">
+    <div>
+        <div style="text-align: center" class="row g-5 container">
+            {% if error_message %}
+                <div style="text-align: center; margin-top: 0;">
+                    <a href="{% url 'commons:main' %}">
+                        <img id="logo-image" src="{% static 'commons/img/logo_transparent_warning.png' %}" alt="">
+                    </a>
+                </div>
+                <h3 style="margin-top: 0;">{{ error_message }}</h3>
+            {% else %}
+                <div style="text-align: center; margin-top: 0;">
+                    <a href="{% url 'commons:main' %}">
+                        <img id="logo-image" src="{% static 'commons/img/logo_transparent.png' %}" alt="">
+                    </a>
+                </div>
+                <h4 style="margin-top: 0;">Say hello to ZZIM!</h4>
+            {% endif %}
+            <form class="needs-validation" action="{% url 'users:sign_up' %}" method="post">
+                {% csrf_token %}
+                <div class="row g-3 pb-sm-4">
+                    <div class="col-sm-6" style="margin: 10px auto;">
+                        <label for="username" class="form-label">ID</label>
+                        <input type="text" class="form-control" id="username"
+                               placeholder="" name="username" required>
+                    </div>
+                </div>
+                <div class="row g-3 pb-sm-1">
+                    <div class="col-sm-6" style="margin: 10px auto;">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password"
+                               placeholder="숫자 + 기타 문자 조합의 8자 이상" name="password" required>
+                    </div>
+                </div>
+                <div class="row g-3 pb-sm-4">
+                    <div class="col-sm-6" style="margin: 10px auto;">
+                        <input type="password" class="form-control" id="password-check"
+                               placeholder="비밀번호 확인" name="password-check" required>
+                    </div>
+                </div>
+                <div class="row g-3 pb-sm-4 ">
+                    <div class="col-sm-6" style="margin: 10px auto;">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email"
+                               placeholder="you@example.com" name="email" required>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-sm-6" style="margin: 10px auto;">
+                        <label for="nickname" class="form-label">Nickname</label>
+                        <input type="text" class="form-control"
+                               placeholder="10자 이상" id="nickname" name="nickname" required>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <button class="w-100 btn btn-success btn" type="submit">Continue to checkout</button>
+            </form>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

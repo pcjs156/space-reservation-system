@@ -30,14 +30,14 @@
             <div style="text-align: center">
                 <img id="logo-image" src="{% static 'commons/img/logo_transparent.png' %}" alt="">
             </div>
-            <h1 style="text-align: center" class="lead mb-3 fw-normal">Welcome!</h1>
+            <h1 style="text-align: center" class="lead mb-3 fw-normal">Welcome Back!</h1>
         {% endif %}
 
-        <div class="form-floating">
+        <div class="form-floating" style="margin-bottom: 10px;">
             <input required type="text" class="form-control" id="floatingInput" name="username">
             <label for="floatingInput">ID</label>
         </div>
-        <div class="form-floating">
+        <div class="form-floating" style="margin-bottom: 10px;">
             <input required type="password" class="form-control" id="floatingPassword" name="password">
             <label for="floatingPassword">Password</label>
         </div>
@@ -47,7 +47,7 @@
         </div>
     </form>
     <div style="text-align: center;">
-        <a href="http://www.naver.com">
+        <a href="{% url 'users:sign_up' %}">
             <button class="w-50 btn btn-sm btn-success" style="margin-top: 10px;">Sign Up</button>
         </a>
     </div>
