@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block head_content %}
+    <script type="text/javascript">
+        go_back = function () {
+            window.history.go(-1);
+            return false;
+        }
+    </script>
+{% endblock %}
+
+{% block body_content %}
+    <p style="text-align: center">로그아웃이 필요한 기능입니다. 로그아웃 하시겠습니까?</p>
+    <div class="row flex-nowrap justify-content-center align-items-center">
+        <a class="col-4 w-25 btn btn-sm btn-danger" href="{% url 'users:logout' %}">
+            로그아웃
+        </a>
+        <a class="col-4 w-25 btn btn-sm btn-secondary" onclick="go_back();">
+            이전 페이지
+        </a>
+    </div>
+{% endblock %}

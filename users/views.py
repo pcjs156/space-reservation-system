@@ -2,7 +2,10 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 
+from .decorators import anonymous_user_only
 
+
+@anonymous_user_only
 def login_view(request, *args, **kwargs):
     if request.method == 'GET':
         return render(request, 'users/login.html')
@@ -33,3 +36,8 @@ def login_view(request, *args, **kwargs):
 def logout_view(request, *args, **kwargs):
     logout(request)
     return redirect('config:main')
+
+
+@login_required
+def request_logout_view(request, *args, **kwargs):
+    return render(request, 'users/request_logout.html')
