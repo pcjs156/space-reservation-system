@@ -2,4 +2,17 @@
 
 {% block body_content %}
     <div>메인 페이지입니다.</div>
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="baseToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <div id="baseToastEmoji">😢</div>
+                <strong id="baseToastStrongMsg" class="me-auto">Beep!</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div id="baseToastBody" class="toast-body">
+                Check the password!
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
