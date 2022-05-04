@@ -19,7 +19,7 @@ def login_view(request, *args, **kwargs):
         user = authenticate(username=username, password=password)
         if user:
             login(request, user)
-            return redirect('commons:main')
+            return redirect('/?toastType=login')
         else:
             context = dict()
             error_message = None
@@ -82,4 +82,4 @@ def signup_view(request, *args, **kwargs):
         else:
             user = authenticate(username=username, password=password)
             login(request, user)
-            return redirect('commons:main')
+            return redirect('/?toastType=signUp')
