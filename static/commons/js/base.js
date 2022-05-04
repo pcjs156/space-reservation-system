@@ -10,7 +10,7 @@ const onLogoutButtonMouseOut = function () {
 
 const onLoginButtonMouseOver = function () {
     const loginButton = document.getElementById('login-button');
-    loginButton.innerText = 'Welcome!';
+    loginButton.innerText = 'Hello!';
 };
 
 const onLoginButtonMouseOut = function () {
@@ -36,4 +36,14 @@ const onLogoMouseOut = function () {
     pathList.push('logo_transparent.png');
 
     logo.src = pathList.join('/');
+};
+
+const onSignUpButtonMouseOver = function () {
+    const signUpButton = document.getElementById('sign-up-button');
+    signUpButton.innerText = 'Welcome!';
+};
+
+const onSignUpButtonMouseOut = function () {
+    const signUpButton = document.getElementById('sign-up-button');
+    signUpButton.innerText = 'Sign Up';
 };

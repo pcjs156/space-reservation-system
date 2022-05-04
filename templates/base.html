@@ -25,16 +25,19 @@
     <header class="py-3">
         <div class="row flex-nowrap justify-content-between align-items-center">
             <div class="col-5"></div>
-            <img id="header-central-logo" class="col-2 text-center" src="{% static 'commons/img/logo_transparent.png' %}"
-            onclick="window.location.href='/';" onmouseover="onLogoMouseOver()" onmouseout="onLogoMouseOut()">
+            <img id="header-central-logo" class="col-2 text-center"
+                 src="{% static 'commons/img/logo_transparent.png' %}"
+                 onclick="window.location.href='/';" onmouseover="onLogoMouseOver()" onmouseout="onLogoMouseOut()">
             <div class="col-5 d-flex justify-content-end align-items-center">
                 {% if user.is_authenticated %}
                     <div class="btn btn-outline-primary m-1">{{ user.username }}</div>
                     <a id="logout-button" class="btn btn-outline-danger" href="{% url 'users:logout' %}"
                        onmouseover="onLogoutButtonMouseOver();" onmouseout="onLogoutButtonMouseOut();">Logout</a>
                 {% else %}
-                    <a id="login-button" class="btn btn-outline-success" href="{% url 'users:login' %}"
+                    <a id="login-button" class="btn btn-outline-success m-1" href="{% url 'users:login' %}"
                        onmouseover="onLoginButtonMouseOver();" onmouseout="onLoginButtonMouseOut();">Login</a>
+                    <a id="sign-up-button" class="btn btn-outline-info" href="{% url 'users:sign_up' %}"
+                       onmouseover="onSignUpButtonMouseOver();" onmouseout="onSignUpButtonMouseOut();">Sign Up</a>
                 {% endif %}
             </div>
         </div>

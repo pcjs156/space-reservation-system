@@ -10,6 +10,6 @@ footer {
     border-top: .05rem solid #e5e5e5;
 }
 
-#login-button, #logout-button {
+#login-button, #logout-button, #sign-up-button {
     width: 6em;
 }
