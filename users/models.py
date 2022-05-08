@@ -117,13 +117,13 @@ class Block(models.Model):
         verbose_name = '제한 내역'
         verbose_name_plural = '제한 내역'
 
-        constraints = (
-            # dt_from이 반드시 dt_to보다 앞의 시점이도록 제한 (raise IntegrityError)
-            models.CheckConstraint(
-                check=Q('dt_from__lt=dt_to'),  # dt_from less than dt_to
-                name='period check'
-            ),
-        )
+        # constraints = (
+        #     # dt_from이 반드시 dt_to보다 앞의 시점이도록 제한 (raise IntegrityError)
+        #     models.CheckConstraint(
+        #         check=Q('dt_from__lt=dt_to'),  # dt_from less than dt_to
+        #         name='period check'
+        #     ),
+        # )
 
 
 class JoinRequest(models.Model):
