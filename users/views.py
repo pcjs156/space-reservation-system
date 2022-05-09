@@ -4,6 +4,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 
 from utils.validation import check_not_null
+
 from .decorators import anonymous_user_only
 from .models import SystemUser
 
@@ -107,3 +108,27 @@ def modify_info_view(request, *args, **kwargs):
             context['toast_message'] = 'Modified!'
 
         return render(request, 'users/modify_account_info.html', context)
+
+
+@login_required
+def group_list_view(request, *args, **kwargs):
+    context = dict()
+
+    # 해당 사용자가 소속된 그룹을 모두 가져옴
+    _groups = request.user.belonged_groups.all()
+
+    # 그룹 매니저로 등록되어 있는 그룹은 따로 보여주어야 함
+    groups_as_manager = list()
+    # 그룹 매니저로 등록되어 있지 않은 그룹도 따로 분리함
+    groups_as_member = list()
+
+    for group in _groups:
+        if group.manager == request.user:
+            groups_as_manager.append(group)
+        else:
+            groups_as_member.append(group)
+
+    context['groups_as_manager'] = groups_as_manager
+    context['groups_as_member'] = groups_as_member
+
+    return render(request, 'users/group_list.html', context)

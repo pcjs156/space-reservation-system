@@ -45,11 +45,19 @@
         </div>
     </header>
     <div class="navbar-nav-scroll py-1 mb-2">
-        <nav class="nav d-flex justify-content-between">
-            <a>요소 1</a>
-            <a>요소 2</a>
-            <a>요소 3</a>
-            <a>요소 4</a>
+        <nav class="nav nav-tabs d-flex justify-content-center">
+            <li class="nav-item">
+                <a id="group-nav-link" class="nav-link {% if request.path == '/user/group/' %}active{% endif %}" href="{% url 'users:group' %}">Groups</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">요소 2</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">요소 3</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">요소 4</a>
+            </li>
         </nav>
     </div>
 </div>
