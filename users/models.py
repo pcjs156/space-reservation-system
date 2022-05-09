@@ -45,6 +45,9 @@ class Group(models.Model):
     invite_code = models.CharField('그룹 초대 코드', default=None, unique=True,
                                    max_length=_INVITE_CODE_LENGTH, validators=[MinLengthValidator(_INVITE_CODE_LENGTH)])
 
+    members = models.ManyToManyField(SystemUser, db_index=True,
+                                     related_name='groups', verbose_name='멤버 목록')
+
     class Meta:
         verbose_name = '그룹'
         verbose_name_plural = '그룹 목록'
