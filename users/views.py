@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from utils.validation import check_not_null
 
 from .decorators import anonymous_user_only
-from .models import SystemUser
+from .models import SystemUser, Group
 
 
 @anonymous_user_only
@@ -113,6 +113,24 @@ def modify_info_view(request, *args, **kwargs):
 @login_required
 def group_list_view(request, *args, **kwargs):
     context = dict()
+    context['group_create_failed'] = False
+
+    # 그룹 생성 요청이 들어온 경우
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        is_public = request.POST.get('is_public') == 'y'
+
+        try:
+            new_group = Group.start_new_group(request.user, name, is_public)
+        except IntegrityError:
+            context['group_create_failed'] = True
+            context['group_create_fail_message'] = 'Try another group name.'
+        except Exception as e:
+            context['group_create_failed'] = True
+            context['group_create_fail_message'] = 'You can manage only 50 groups.'
+        else:
+            context['group_create_failed'] = False
+            context['created_group'] = new_group
 
     # 해당 사용자가 소속된 그룹을 모두 가져옴
     _groups = request.user.belonged_groups.all()
@@ -132,3 +150,12 @@ def group_list_view(request, *args, **kwargs):
     context['groups_as_member'] = groups_as_member
 
     return render(request, 'users/group_list.html', context)
+
+
+@login_required
+def group_create_view(request, *args, **kwargs):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        is_public = request.POST.get('is_public')
+
+    return redirect('users:group', args, kwargs)

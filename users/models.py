@@ -1,4 +1,7 @@
-from django.db import models
+import string
+import random
+
+from django.db import models, IntegrityError
 from django.contrib.auth.models import AbstractUser, Group
 from django.core.validators import MinLengthValidator
 
@@ -49,6 +52,53 @@ class Group(models.Model):
     class Meta:
         verbose_name = '그룹'
         verbose_name_plural = '그룹 목록'
+
+    @classmethod
+    def start_new_group(cls, manager: SystemUser, group_name: str, is_public: bool) -> Group:
+        """
+        새 그룹을 생성해 반환하는 메서드
+
+        :param manager: 그룹 관리자
+        :param group_name: 생성할 그룹의 이름(unique)
+        :param is_public: 공개 여부
+        :return: 새로 생성된 그룹
+
+        :except IntegrityError: 이미 사용중인 그룹명인 경우
+        :except Exception: 그룹 개설을 요청한 사용자가 50개 이상의 그룹을 관리하고 있는 경우
+        """
+        # 1. manager가 이미 50개 그룹의 매니저인 경우 예외를 발생시킴
+        if len(manager.managing_groups.all()) >= 50:
+            raise Exception('50개 이상의 그룹을 관리할 수 없습니다.')
+
+        # 2. 이미 사용중인 그룹명인 경우 생성 거절됨
+        try:
+            # 3. Unique한 그룹 초대 코드를 생성
+            invite_code = cls.get_unique_invite_code()
+            new_group = Group.objects.create(
+                manager=manager, name=group_name, is_public=is_public, invite_code=invite_code
+            )
+        except IntegrityError as e:
+            raise e
+
+        # 4. 해당 그룹의 첫 멤버로 그룹 매니저를 등록
+        new_group.members.add(manager)
+
+        return new_group
+
+    @classmethod
+    def get_unique_invite_code(cls) -> str:
+        """
+        Unique한 Group.invite_code를 새로 생성해 반환하는 메서드
+        생성에 사용할 문자와 invite_code의 길이는 각각 Group._INVITE_CODE_CHARS과 Group._INVITE_CODE_LENGTH에 의해 결정된다.
+
+        :return: Unique한 invite_code
+        """
+        while True:
+            new_invite_code = ''.join(random.sample(cls._INVITE_CODE_CHARS, cls._INVITE_CODE_LENGTH))
+            existing_invite_code = cls.objects.values('invite_code')
+            if new_invite_code not in existing_invite_code:
+                break
+        return new_invite_code
 
 
 class PermissionTag(models.Model):

@@ -29,6 +29,84 @@
         {% endif %}
         </tbody>
     </table>
+    <div class="d-flex justify-content-end">
+        <a href="#" id="new_group_btn" class="btn btn-outline-success">New group</a>
+    </div>
+
+    <div id="new_group_modal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create new group!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{% url 'users:group' %}" method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="new_group_form_name" class="form-label">Group name</label>
+                            <input type="text" class="form-control" id="new_group_form_name" name="name" required>
+                        </div>
+                        <div>
+                            Is your group public?
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="is_public"
+                                       id="new_group_form_is_public" value="y">
+                                <label class="form-check-label" for="new_group_form_is_public">
+                                    Sure!
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="is_public"
+                                       id="new_group_form_is_not_public"
+                                       checked value="n">
+                                <label class="form-check-label" for="new_group_form_is_not_public">
+                                    Nope.
+                                </label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="submit" class="btn btn-success" value="Create!"></input>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if group_create_failed or created_group %}
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+            <div id="groupCreateToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <div id="groupCreateToastEmoji">
+                        {% if group_create_failed %}
+                            😔
+                        {% elif created_group %}
+                            😃
+                        {% endif %}
+                    </div>
+                    <strong id="groupCreateToastStrongMsg" class="me-auto">
+                        {% if group_create_failed %}
+                            Failed to create group.
+                        {% elif created_group %}
+                            Done!
+                        {% endif %}
+                    </strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div id="groupCreateToastBody" class="toast-body">
+                    {% if group_create_failed %}
+                        {{ group_create_fail_message }}
+                    {% elif created_group %}
+                        Group '{{ created_group.name }}' is created.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
 
     <h3>소속된 그룹 목록</h3>
     <table class="table">
@@ -57,4 +135,5 @@
         {% endif %}
         </tbody>
     </table>
+    <script type="text/javascript" src="{% static 'users/js/group_list.js' %}"></script>
 {% endblock %}
