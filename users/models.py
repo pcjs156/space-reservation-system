@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group
-from django.db.models import Q
 from django.core.validators import MinLengthValidator
 
 
@@ -42,7 +41,8 @@ class Group(models.Model):
     is_public = models.BooleanField('그룹 공개 여부', default=False)
 
     _INVITE_CODE_LENGTH = 5
-    invite_code = models.CharField('그룹 초대 코드', default=None,
+    _INVITE_CODE_CHARS = string.ascii_letters + string.digits
+    invite_code = models.CharField('그룹 초대 코드', default=None, unique=True,
                                    max_length=_INVITE_CODE_LENGTH, validators=[MinLengthValidator(_INVITE_CODE_LENGTH)])
 
     class Meta:
