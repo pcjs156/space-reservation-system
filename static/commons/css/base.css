@@ -13,3 +13,7 @@ footer {
 #login-button, #logout-button, #sign-up-button {
     width: 6em;
 }
+
+main {
+    margin: 0 20px;
+}

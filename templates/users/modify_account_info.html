@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body_content %}
+    <div class="p-5">
+        <h3>개인정보 변경</h3>
+        {% if modify_requested %}
+            {% if modify_failed %}
+                <div id="modify-alert" class="alert alert-danger alert-dismissible fade show col-sm-6" role="alert">
+            {% else %}
+                <div id="modify-alert" class="alert alert-success alert-dismissible fade show col-sm-6" role="alert">
+            {% endif %}
+        {% if modify_failed %}
+            ❌
+        {% else %}
+            ✅
+        {% endif %}
+        {{ toast_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+        <form action="{% url 'users:modify_account_info' %}" method="post">
+            {% csrf_token %}
+            <div class="col-sm-6" style="padding-bottom: 5px;">
+                <label for="nickname" class="form-label">Nickname</label>
+                <input type="text" class="form-control" value="{{ user.nickname }}"
+                       placeholder="10자 이상" id="nickname" name="nickname">
+            </div>
+            <input class="btn btn-primary col-sm-1 p-1" type="submit" value="변경"></input>
+        </form>
+        </div>
+{% endblock %}

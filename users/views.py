@@ -83,3 +83,27 @@ def signup_view(request, *args, **kwargs):
             user = authenticate(username=username, password=password)
             login(request, user)
             return redirect('/?toastType=signUp')
+
+
+@login_required
+def modify_info_view(request, *args, **kwargs):
+    context = dict()
+
+    if request.method == 'GET':
+        context['modify_requested'] = False
+        return render(request, 'users/modify_account_info.html')
+
+    elif request.method == 'POST':
+        context['modify_requested'] = True
+
+        new_nickname = request.POST.get('nickname')
+        if not new_nickname:
+            context['modify_failed'] = True
+            context['toast_message'] = 'Nickname is empty.'
+        else:
+            request.user.nickname = new_nickname
+            request.user.save()
+            context['modify_failed'] = False
+            context['toast_message'] = 'Modified!'
+
+        return render(request, 'users/modify_account_info.html', context)

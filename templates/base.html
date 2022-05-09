@@ -30,7 +30,9 @@
                  onclick="window.location.href='/';" onmouseover="onLogoMouseOver()" onmouseout="onLogoMouseOut()">
             <div class="col-5 d-flex justify-content-end align-items-center">
                 {% if user.is_authenticated %}
-                    <div class="btn btn-outline-primary m-1">{{ user.username }}</div>
+                    <a href="{% url 'users:modify_account_info' %}">
+                        <div class="btn btn-outline-primary m-1">{{ user.username }}</div>
+                    </a>
                     <a id="logout-button" class="btn btn-outline-danger" href="{% url 'users:logout' %}"
                        onmouseover="onLogoutButtonMouseOver();" onmouseout="onLogoutButtonMouseOut();">Logout</a>
                 {% else %}
@@ -51,7 +53,7 @@
         </nav>
     </div>
 </div>
-<main class="container min-vh-100">
+<main class="container min-vh-100 border">
     {% block body_content %}
     {% endblock %}
 </main>
