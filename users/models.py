@@ -13,8 +13,6 @@ class SystemUser(AbstractUser):
     # (Not inherit)
     first_name = None
     last_name = None
-    groups = None
-    user_permissions = None
 
     # 그룹에서 중복되지 않는 경우 기본적으로 사용할 닉네임
     nickname = models.CharField('닉네임', max_length=30, blank=False, null=False)
@@ -46,7 +44,7 @@ class Group(models.Model):
                                    max_length=_INVITE_CODE_LENGTH, validators=[MinLengthValidator(_INVITE_CODE_LENGTH)])
 
     members = models.ManyToManyField(SystemUser, db_index=True,
-                                     related_name='groups', verbose_name='멤버 목록')
+                                     related_name='belonged_groups', verbose_name='멤버 목록')
 
     class Meta:
         verbose_name = '그룹'
