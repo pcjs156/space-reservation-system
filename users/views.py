@@ -1,3 +1,4 @@
+import member as member
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -8,6 +9,7 @@ from utils.validation import check_not_null
 
 from .decorators import anonymous_user_only, group_manager_only, group_member_only
 from .models import SystemUser, Group
+from .utils import sort_group_member
 
 
 @anonymous_user_only
@@ -156,7 +158,22 @@ def group_list_view(request, *args, **kwargs):
 @group_member_only
 def group_detail_view(request, *args, **kwargs):
     context = dict()
-    context['group'] = kwargs['group']
+    group = kwargs['group']
+    context['group'] = group
+
+    members = list(group.members.all())
+    sort_group_member(group, members, True)
+
+    member_infos = [
+        {
+            'username': _member.username,
+            'nickname': _member.nickname,
+            'permission_tags': _member.get_permission_tags_in_group(group),
+            'blocked': len(_member.get_valid_blocks_in_group(group)) > 0,
+            'is_manager': _member == group.manager,
+        } for _member in members
+    ]
+    context['member_infos'] = member_infos
 
     return render(request, 'users/group_detail.html', context)
 

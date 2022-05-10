@@ -1,5 +1,6 @@
 import string
 import random
+from datetime import datetime
 
 from django.db import models, IntegrityError
 from django.contrib.auth.models import AbstractUser, Group
@@ -17,12 +18,25 @@ class SystemUser(AbstractUser):
     first_name = None
     last_name = None
 
-    # 그룹에서 중복되지 않는 경우 기본적으로 사용할 닉네임
     nickname = models.CharField('닉네임', max_length=30, blank=False, null=False)
 
     class Meta:
         verbose_name = '사용자'
         verbose_name_plural = '사용자 목록'
+
+    def get_permission_tags_in_group(self, group: Group):
+        assert self.belonged_groups.filter(pk=group.pk).exists()
+        return self.given_permission_tags.filter(group=group)
+
+    def get_entire_blocks_in_group(self, group: Group):
+        assert self.belonged_groups.filter(pk=group.pk).exists()
+        return self.blocks.filter(group=group)
+
+    def get_valid_blocks_in_group(self, group: Group):
+        entire_blocks = self.get_entire_blocks_in_group(group)
+        now = datetime.now()
+        valid_blocks = entire_blocks.filter(dt_from__gte=now, dt_to__lte=now)
+        return valid_blocks
 
 
 class Group(models.Model):

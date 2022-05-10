@@ -1,8 +1,50 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load users_filters %}
+
+{% block head_content %}
+    <link href="{% static 'users/css/group_detail.css' %}" rel="stylesheet" type="text/css">
+{% endblock %}
 
 {% block body_content %}
-    {{ group.name }}
+    <h1>{{ group.name }}</h1>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nickname</th>
+            <th>Permission</th>
+            <th>etc</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for member in member_infos %}
+            <tr class="{% if member|get_item:'is_manager' %}manager-row{% elif member|get_item:'blocked' %}blocked-row{% else %}default-row{% endif %}">
+                <td>
+                    <span class="user-status-emoji">
+                        {% if member|get_item:'is_manager' %}
+                            👑{% elif member|get_item:'blocked' %}🚫{% else %}✅{% endif %}
+                    </span>
+                    <span>
+                        {{ member|get_item:'username' }}
+                    </span>
+                </td>
+                <td>{{ member|get_item:'nickname' }}</td>
+                <td>
+                    {% if member|get_item:'is_manager' %}
+                        <span class="badge rounded-pill bg-success">manager</span>
+                    {% endif %}
+                    {% for permission_tag in member|get_item:'permission_tags' %}
+                        <span class="badge rounded-pill bg-primary">{{ permission_tag.body }}</span>
+                    {% endfor %}
+                </td>
+                <td>X</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
     {% if group.manager == request.user %}
         <div>
             <a href="{% url 'users:group_manage' group.pk %}">Goto managing page</a>
