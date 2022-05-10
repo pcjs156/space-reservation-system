@@ -10,8 +10,8 @@ class SystemUser(AbstractUser):
     """
     시스템 사용자
     - SystemUser : Group = 1 : 1 (그룹 매니저)
-    - SystemUser : MemberInfo = 1 : N (여러 그룹에 소속될 수 있음)
     - SystemUser : JoinRequest = 1 : N (여러 그룹에 가입 요청을 할 수 있음)
+    - SystemUser : Group = N : M (사용자는 여러 그룹에 가입할 수 있고, 그룹은 여러 사용자를 포함할 수 있음)
     """
     # (Not inherit)
     first_name = None
@@ -29,7 +29,7 @@ class Group(models.Model):
     """
     여러 사용자를 포함하는 그룹
     - Group : SystemUser = 1 : 1 (그룹 매니저)
-    - Group : MemberInfo = 1 : N (그룹에 다수의 멤버가 소속될 수 있음)
+    - Group : SystemUser = 1 : N (그룹에 다수의 멤버가 소속될 수 있음)
     - Group : PermissionTag = 1 : N (그룹에 여러 권한 태그가 있을 수 있음)
     - Group : JoinRequest = 1 : N (한 그룹에 여러 그룹 요청이 올 수 있음)
     """
@@ -105,11 +105,13 @@ class PermissionTag(models.Model):
     """
     그룹 내에서의 권한을 표시하기 위한 태그
     해당 태그의 존재 여부로 그룹 사용자의 특정 기능의 사용 가능 여부가 정해진다.
-    - PermissionTag : MemberInfo = N : M (여러 사용자가 여러 권한을 가질 수 있으므로)
+    - PermissionTag : SystemUser = N : M (여러 사용자가 여러 권한을 가질 수 있으므로)
     - PermissionTag : Group = N : 1 (권한은 그룹 안에서 유효하므로)
     """
     group = models.ForeignKey(Group, null=False, on_delete=models.CASCADE,
                               verbose_name='대상 그룹', related_name='registered_permission_tags')
+    members = models.ManyToManyField(SystemUser,
+                                     verbose_name='대상 멤버', related_name='given_permission_tags')
     body = models.CharField(max_length=10, blank=False, null=False)
 
     class Meta:
@@ -117,50 +119,18 @@ class PermissionTag(models.Model):
         verbose_name_plural = '권한 태그 목록'
 
 
-class MemberInfo(models.Model):
-    """
-    그룹 내에서 사용자를 가리키기 위한 고유 정보
-    - MemberInfo : SystemUser = N : 1 (사용자가 여러 그룹에 소속될 수 있으므로)
-    - MemberInfo : Group = N : 1 (그룹 내에 여러 사용자가 소속될 수 있으므로)
-    - MemberInfo : Block = 1 : N (한 사용자가 여러 번 제한될 수 있으므로)
-    - MemberInfo : PermissionTag = 1 : N (한 사용자가 여러개의 권한을 가질 수 있으므로)
-    """
-    created_at = models.DateTimeField('가입 일시', auto_now_add=True)
-
-    group = models.ForeignKey(Group, null=False, on_delete=models.CASCADE,
-                              verbose_name='대상 그룹', related_name='member_infos')
-    user = models.ForeignKey(SystemUser, null=False, on_delete=models.CASCADE,
-                             verbose_name='대상 유저', related_name='group_infos')
-
-    # 그룹 내에서 사용할 닉네임 (그룹 내에서 Unique함)
-    nickname = models.CharField('닉네임', max_length=30, blank=False, null=False)
-
-    # 그룹 내에서 해당 사용자가 가지는 권한의 목록
-    permission_tags = models.ManyToManyField(PermissionTag, db_index=True,
-                                             related_name='permissions', verbose_name='권한 목록')
-
-    class Meta:
-        verbose_name = '그룹 내 사용자 정보'
-        verbose_name_plural = '그룹 내 사용자 정보 목록'
-
-        constraints = (
-            # 그룹 내에서 nickname field가 Unique하도록 제한 (raise IntegrityError)
-            models.UniqueConstraint(
-                fields=['group', 'nickname'],
-                name='unique nicknames'
-            ),
-        )
-
-
 class Block(models.Model):
     """
     그룹 내 활동 제한 내역
-    - Block : MemberInfo = N : 1 (한 사용자가 여러 번 제한될 수 있으므로)
+    - Block : SystemUser = N : 1 (한 사용자가 여러 번 제한될 수 있으므로)
+    - Block : Group : N : 1 (한 그룹에 여러 건의 제한이 있을 수 있으므로)
     """
     created_at = models.DateTimeField('생성 일시', auto_now_add=True)
 
-    member_info = models.ForeignKey(MemberInfo, null=False, on_delete=models.CASCADE,
-                                    verbose_name='대상 멤버 정보', related_name='blocks')
+    group = models.ForeignKey(Group, null=False, on_delete=models.CASCADE,
+                              verbose_name='대상 그룹', related_name='blocks_in_group')
+    member = models.ForeignKey(SystemUser, null=False, on_delete=models.CASCADE,
+                               verbose_name='대상 멤버', related_name='blocks')
     dt_from = models.DateTimeField('제한 시작 일시', blank=False, null=False)
     dt_to = models.DateTimeField('제한 해제 일시', blank=False, null=False)
 

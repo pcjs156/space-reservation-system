@@ -191,7 +191,6 @@ def group_manage_view(request, *args, **kwargs):
 def group_delete_view(request, *args, **kwargs):
     group = kwargs['group']
     group.delete()
-    group.save()
 
     del kwargs['group']
 
