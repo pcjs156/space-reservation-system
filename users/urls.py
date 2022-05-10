@@ -15,4 +15,6 @@ urlpatterns = [
     path('group/<int:pk>/manage/delete/', views.group_delete_view, name='group_delete'),
     path('group/<int:pk>/manage/reissue-intie-code/', views.group_invite_code_change_view,
          name='group_reissue_invite_code'),
+    path('group/search/', views.group_search_view, name='group_search'),
+    path(r'^group/search/(?P<str:invite_code>\w+))/$', views.group_search_view, name='group_search'),
 ]

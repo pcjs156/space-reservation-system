@@ -229,3 +229,24 @@ def group_invite_code_change_view(request, *args, **kwargs):
             break
 
     return JsonResponse({'new_invite_code': group.invite_code})
+
+
+@login_required
+def group_search_view(request, *args, **kwargs):
+    invite_code = request.GET.get('invite_code')
+
+    if invite_code:
+        context = dict()
+        context['search_complete'] = False
+
+        try:
+            group = Group.objects.get(invite_code=invite_code)
+        except Group.DoesNotExist:
+            context['search_complete'] = False
+        else:
+            context['search_complete'] = True
+            context['group'] = group
+
+        return render(request, 'users/group_search.html', context)
+    else:
+        return render(request, 'users/group_search.html')

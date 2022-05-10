@@ -18,7 +18,6 @@
 
     <script type="text/javascript" src="{% static 'commons/js/base.js' %}"></script>
     {% block head_content %}
-        <div>NOO</div>
     {% endblock %}
 </head>
 <body class="bg-light">
@@ -48,10 +47,12 @@
     <div class="navbar-nav-scroll py-1 mb-2">
         <nav class="nav nav-tabs d-flex justify-content-center">
             <li class="nav-item">
-                <a id="group-nav-link" class="nav-link {% if request.path == '/user/group/' %}active{% endif %}" href="{% url 'users:group' %}">Groups</a>
+                <a id="group-nav-link" class="nav-link {% if request.path == '/user/group/' %}active{% endif %}"
+                   href="{% url 'users:group' %}">My Groups</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">요소 2</a>
+                <a id="group-nav-link" class="nav-link {% if request.path == '/user/group/search/' %}active{% endif %}"
+                   href="{% url 'users:group_search' %}">Search Group</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="#">요소 3</a>

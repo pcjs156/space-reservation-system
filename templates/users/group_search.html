@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body_content %}
+    <form action="{% url 'users:group_search' %}" action="get" style="text-align: center;">
+        <div class="mb-3" style="text-align: center;">
+            <label for="inviteCodeInput" class="form-label">Search by invite code</label>
+            <input type="text" class="form-control" id="inviteCodeInput" style="text-align: center;"
+                   name="invite_code" required>
+            <button type="submit" class="btn btn-primary">Search!</button>
+        </div>
+    </form>
+
+    <hr>
+
+    {% if not search_complete %}
+        <p class="alert alert-danger" role="alert">
+            Cannot find group!
+        </p>
+    {% else %}
+        <p class="alert alert-success" role="alert">
+            {{ group.name }}
+        </p>
+    {% endif %}
+{% endblock %}
