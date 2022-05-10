@@ -3,4 +3,9 @@
 
 {% block body_content %}
     {{ group.name }}
+    {% if group.manager == request.user %}
+        <div>
+            <a href="{% url 'users:group_manage' group.pk %}">Goto managing page</a>
+        </div>
+    {% endif %}
 {% endblock %}

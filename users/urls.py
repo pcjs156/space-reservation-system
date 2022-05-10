@@ -11,4 +11,5 @@ urlpatterns = [
     path('info/', views.modify_info_view, name='modify_account_info'),
     path('group/', views.group_list_view, name='group'),
     path('group/<int:pk>/', views.group_detail_view, name='group_detail'),
+    path('group/<int:pk>/manage/', views.group_manage_view, name='group_manage'),
 ]
