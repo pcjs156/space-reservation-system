@@ -153,14 +153,10 @@ def group_list_view(request, *args, **kwargs):
     return render(request, 'users/group_list.html', context)
 
 
-@login_required
+@group_member_only
 def group_detail_view(request, *args, **kwargs):
     context = dict()
-
-    pk = kwargs['pk']
-
-    group = get_object_or_404(Group, pk=pk)
-    context['group'] = group
+    context['group'] = kwargs['group']
 
     return render(request, 'users/group_detail.html', context)
 
