@@ -7,10 +7,12 @@
 
 {% block body_content %}
     <div>
-        <form action="#outside">
+        <form action="{% url 'users:group_manage' group.pk %}" method="post">
+            {% csrf_token %}
             <div class="mb-3">
                 <label for="groupNameInput" class="form-label">Group name</label>
-                <input type="text" class="form-control" id="groupNameInput" aria-describedby="groupNameHelp">
+                <input type="text" class="form-control" id="groupNameInput"
+                       aria-describedby="groupNameHelp" name="name" value="{{ group.name }}" required>
                 <div id="groupNameHelp" class="form-text">The group name must be unique.</div>
             </div>
 
@@ -19,22 +21,49 @@
                 <input type="text" class="form-control" id="groupInviteCodeInput" value="{{ group.invite_code }}"
                        disabled>
             </div>
-            <div id="reissueInviteCodeBtn" class="btn btn-primary"
+            <div id="reissueInviteCodeBtn" class="btn btn-primary col-2"
                  requestURL="{% url 'users:group_reissue_invite_code' group.pk %}">Change invite code
             </div>
 
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="isPublicCheck">
+            <div class="mb-3 form-check form-switch">
+                <input type="checkbox" class="form-check-input" id="isPublicCheck" name="is_public"
+                       {% if group.is_public %}checked{% else %}{% endif %}>
                 <label class="form-check-label" for="isPublicCheck">Is your group public?</label>
             </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" class="btn btn-primary">Modify</button>
         </form>
     </div>
+    {% if is_modify_failed is not None and is_modify_failed is True %}
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+            <div id="modifyFailedToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <div id="modifyFailedToastEmoji">😢</div>
+                    <strong id="modifyFailedToastStrongMsg" class="me-auto">Beep!</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div id="modifyFailedToastBody" class="toast-body">
+                    {{ modify_fail_message }}
+                </div>
+            </div>
+        </div>
+    {% elif is_modify_failed is not None and is_modify_failed is False %}
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+            <div id="modifyFailedToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <div id="modifyFailedToastEmoji">🤩</div>
+                    <strong id="modifyFailedToastStrongMsg" class="me-auto">Done!</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div id="modifyFailedToastBody" class="toast-body">
+                    Group's information is modified.
+                </div>
+            </div>
+        </div>
+    {% endif %}
 
     <hr>
 
     <div id="groupDeleteBtn" class="btn btn-danger">Delete Group</div>
-    {#    <div><a href="{% url 'users:group_delete' group.pk %}">Delete Group</a></div>#}
     <div id="groupDeleteModal" class="modal fade" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">

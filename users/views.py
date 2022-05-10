@@ -169,9 +169,26 @@ def group_detail_view(request, *args, **kwargs):
 def group_manage_view(request, *args, **kwargs):
     context = dict()
 
-    context['group'] = kwargs['group']
+    group = kwargs['group']
+    context['group'] = group
 
-    return render(request, 'users/group_manage.html', context)
+    if request.method == 'GET':
+        return render(request, 'users/group_manage.html', context)
+    elif request.method == 'POST':
+        name = request.POST.get('name')
+        is_public = request.POST.get('is_public') is not None
+
+        context['is_modify_failed'] = False
+
+        try:
+            group.name = name
+            group.is_public = is_public
+            group.save()
+        except IntegrityError:
+            context['is_modify_failed'] = True
+            context['modify_fail_message'] = 'This group name is already used.'
+
+        return render(request, 'users/group_manage.html', context)
 
 
 @group_manager_only
