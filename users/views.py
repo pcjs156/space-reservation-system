@@ -1,5 +1,5 @@
 from django.db import IntegrityError
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 
@@ -153,9 +153,12 @@ def group_list_view(request, *args, **kwargs):
 
 
 @login_required
-def group_create_view(request, *args, **kwargs):
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        is_public = request.POST.get('is_public')
+def group_detail_view(request, *args, **kwargs):
+    context = dict()
 
-    return redirect('users:group', args, kwargs)
+    pk = kwargs['pk']
+
+    group = get_object_or_404(Group, pk=pk)
+    context['group'] = group
+
+    return render(request, 'users/group_detail.html', context)
