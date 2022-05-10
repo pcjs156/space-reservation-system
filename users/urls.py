@@ -17,4 +17,5 @@ urlpatterns = [
          name='group_reissue_invite_code'),
     path('group/search/', views.group_search_view, name='group_search'),
     path(r'^group/search/(?P<str:invite_code>\w+))/$', views.group_search_view, name='group_search'),
+    path('group/join/', views.group_join_request, name='group_join_request'),
 ]

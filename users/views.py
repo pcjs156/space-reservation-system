@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from utils.validation import check_not_null
 
 from .decorators import anonymous_user_only, group_manager_only, group_member_only
-from .models import SystemUser, Group
+from .models import SystemUser, Group, JoinRequest
 from .utils import sort_group_member
 
 
@@ -235,10 +235,9 @@ def group_invite_code_change_view(request, *args, **kwargs):
 def group_search_view(request, *args, **kwargs):
     invite_code = request.GET.get('invite_code')
 
-    if invite_code:
-        context = dict()
-        context['search_complete'] = False
+    context = dict()
 
+    if invite_code:
         try:
             group = Group.objects.get(invite_code=invite_code)
         except Group.DoesNotExist:
@@ -247,6 +246,39 @@ def group_search_view(request, *args, **kwargs):
             context['search_complete'] = True
             context['group'] = group
 
-        return render(request, 'users/group_search.html', context)
-    else:
-        return render(request, 'users/group_search.html')
+    return render(request, 'users/group_search.html', context)
+
+
+@login_required
+def group_join_request(request, *args, **kwargs):
+    if request.method == 'GET':
+        return render(request, 'users/group_join_request.html')
+    elif request.method == 'POST':
+        invite_code = request.POST.get('invite_code')
+        group = get_object_or_404(Group, invite_code=invite_code)
+
+        context = dict()
+        context['group'] = group
+
+        # 이미 가입한 그룹인 경우
+        if request.user.belonged_groups.filter(pk=group.pk).exists():
+            context['already_member'] = True
+        # 가입하지 않은 그룹인 경우
+        else:
+            context['already_member'] = False
+            context['already_requested'] = False
+
+            # 공개된 그룹인 경우 바로 멤버로 등록됨
+            if group.is_public:
+                group.members.add(request.user)
+                group.save()
+            # 공개되지 않은 그룹인 경우 그룹 등록 요청을 보냄
+            else:
+                try:
+                    join_request = JoinRequest.objects.create(group=group, user=request.user)
+                    context['join_request'] = join_request
+                # 한 그룹에 한 번만 가입 요청을 할 수 있음
+                except IntegrityError:
+                    context['already_requested'] = True
+
+        return render(request, 'users/group_join_request.html', context)

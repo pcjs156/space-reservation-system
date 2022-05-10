@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body_content %}
+    {% if already_member %}
+        <div class="alert alert-success" role="alert">
+            You're already member of <a href="{% url 'users:group_detail' group.pk %}">this group</a>!
+        </div>
+    {% else %}
+        {% if already_requested %}
+            <div class="alert alert-success" role="alert">
+                You're already requested to this group before.
+            </div>
+        {% else %}
+            {% if group.is_public and request.user in group.members.all %}
+                <div class="alert alert-success" role="alert">Now you are member of group <a
+                        href="{% url 'users:group_detail' group.pk %}">'{{ group.name }}'</a>!
+                </div>
+            {% else %}
+                <div class="alert alert-success" role="alert">
+                    Join request is sent!
+                </div>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+{% endblock %}

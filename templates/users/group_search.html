@@ -13,13 +13,22 @@
 
     <hr>
 
-    {% if not search_complete %}
+    {% if search_complete is not None and not search_complete %}
         <p class="alert alert-danger" role="alert">
             Cannot find group!
         </p>
-    {% else %}
+    {% elif search_complete is not None and search_complete %}
         <p class="alert alert-success" role="alert">
             {{ group.name }}
+            {% if request.user in group.members.all %}
+                <div>Your are already member of <a href="{% url 'users:group_detail' group.pk %}">this group</a></div>
+            {% else %}
+                <form action="{% url 'users:group_join_request' %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="invite_code" value="{{ group.invite_code }}">
+                    <input class="btn btn-success" type="submit" value="Submit">
+                </form>
+            {% endif %}
         </p>
     {% endif %}
 {% endblock %}
