@@ -166,6 +166,7 @@ def group_detail_view(request, *args, **kwargs):
 
     member_infos = [
         {
+            'pk': _member.pk,
             'username': _member.username,
             'nickname': _member.nickname,
             'permission_tags': _member.get_permission_tags_in_group(group),
@@ -355,5 +356,19 @@ def reject_join_request_view(request, *args, **kwargs):
     user = get_object_or_404(SystemUser, pk=target_user_pk)
     join_request = get_object_or_404(JoinRequest, pk=join_request_pk, user=user, group=group)
     join_request.reject()
+
+    return group_detail_view(request, *args, **kwargs)
+
+
+@group_manager_only
+def kick_group_member_view(request, *args, **kwargs):
+    target_member_pk = kwargs['member_pk']
+
+    group = kwargs['group']
+    user = get_object_or_404(SystemUser, pk=target_member_pk)
+    if not group.members.filter(pk=user.pk).exists():
+        raise Http404()
+
+    group.remove_member(user)
 
     return group_detail_view(request, *args, **kwargs)

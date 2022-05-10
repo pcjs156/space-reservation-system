@@ -47,7 +47,7 @@
                         <a href="#">Permission</a>
                         {% if member|get_item:'username' != user.username %}
                             / <a href="#">Block</a>
-                            / <a href="#">Kick</a>
+                            / <a href="{% url 'users:group_member_kick' group.pk member|get_item:'pk' %}">Kick</a>
                         {% endif %}
                     </td>
                 {% endif %}
