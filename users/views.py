@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
@@ -182,3 +183,20 @@ def group_delete_view(request, *args, **kwargs):
     del kwargs['group']
 
     return redirect('users:group')
+
+
+@group_manager_only
+def group_invite_code_change_view(request, *args, **kwargs):
+    group = kwargs['group']
+
+    while True:
+        try:
+            new_invite_code = Group.get_unique_invite_code()
+            group.invite_code = new_invite_code
+            group.save()
+        except IntegrityError:
+            continue
+        else:
+            break
+
+    return JsonResponse({'new_invite_code': group.invite_code})

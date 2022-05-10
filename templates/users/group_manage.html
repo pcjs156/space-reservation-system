@@ -6,6 +6,33 @@
 {% endblock %}
 
 {% block body_content %}
+    <div>
+        <form action="#outside">
+            <div class="mb-3">
+                <label for="groupNameInput" class="form-label">Group name</label>
+                <input type="text" class="form-control" id="groupNameInput" aria-describedby="groupNameHelp">
+                <div id="groupNameHelp" class="form-text">The group name must be unique.</div>
+            </div>
+
+            <div class="mb-3 col-2">
+                <label for="groupInviteCodeInput" class="form-label">Invite code</label>
+                <input type="text" class="form-control" id="groupInviteCodeInput" value="{{ group.invite_code }}"
+                       disabled>
+            </div>
+            <div id="reissueInviteCodeBtn" class="btn btn-primary"
+                 requestURL="{% url 'users:group_reissue_invite_code' group.pk %}">Change invite code
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="isPublicCheck">
+                <label class="form-check-label" for="isPublicCheck">Is your group public?</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+
+    <hr>
+
     <div id="groupDeleteBtn" class="btn btn-danger">Delete Group</div>
     {#    <div><a href="{% url 'users:group_delete' group.pk %}">Delete Group</a></div>#}
     <div id="groupDeleteModal" class="modal fade" tabindex="-1">
