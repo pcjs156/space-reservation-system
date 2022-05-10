@@ -45,6 +45,12 @@
         </tbody>
     </table>
 
+    <div>
+        <a class="btn btn-primary" href="{% url 'users:group_member_detail' group.pk user.pk %}">
+            Modify member information
+        </a>
+    </div>
+
     {% if group.manager == request.user %}
         <div>
             <a href="{% url 'users:group_manage' group.pk %}">Goto managing page</a>

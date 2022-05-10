@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load users_filters %}
+
+{% block head_content %}
+
+{% endblock %}
+
+{% block body_content %}
+    <h1>{{ group.name }}</h1>
+    <div id="withdrawConfirmBtn" type="submit" class="btn btn-danger">Going out from this group</div>
+
+    <div id="withdrawConfirmModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Seriously?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    It is irreversible!
+                </div>
+                <div class="modal-footer">
+                    <form action="{% url 'users:group_member_withdraw' group.pk user.pk %}">
+                        <input class="btn btn-danger" type="submit" value="Yes">
+                    </form>
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">No!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if try_withdraw %}
+        <div class="alert alert-danger" role="alert">
+            {{ try_withdraw_errormessage }}
+        </div>
+    {% endif %}
+
+    <script type="text/javascript" src="{% static 'users/js/group_member_detail.js' %}"></script>
+{% endblock %}

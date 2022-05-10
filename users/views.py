@@ -1,6 +1,6 @@
 import member as member
 from django.db import IntegrityError
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
@@ -282,3 +282,48 @@ def group_join_request(request, *args, **kwargs):
                     context['already_requested'] = True
 
         return render(request, 'users/group_join_request.html', context)
+
+
+@group_member_only
+def group_member_detail_view(request, *args, **kwargs):
+    group = kwargs['group']
+    member_pk = kwargs['member_pk']
+
+    _try_withdraw = kwargs.get('_try_withdraw', False)
+    _withdraw_errormessage = kwargs.get('_withdraw_errormessage', False)
+
+    context = dict()
+    context['group'] = group
+
+    if _try_withdraw:
+        context['try_withdraw'] = True
+        context['try_withdraw_errormessage'] = _withdraw_errormessage
+
+    target_member = get_object_or_404(SystemUser, pk=member_pk)
+
+    # 조회/수정의 목표가 되는 사용자가 해당 그룹에 존재하며, 요청한 본인이 아닌 경우 404 error
+    if not (group.members.filter(pk=member_pk) and request.user == target_member):
+        raise Http404()
+
+    return render(request, 'users/group_member_detail.html', context)
+
+
+@group_member_only
+def group_withdraw_view(request, *args, **kwargs):
+    group = kwargs['group']
+    member_pk = kwargs['member_pk']
+
+    target_member = get_object_or_404(SystemUser, pk=member_pk)
+    # 조회/수정의 목표가 되는 사용자가 해당 그룹에 존재하며, 요청한 본인이 아닌 경우 404 error
+    if not (group.members.filter(pk=member_pk) and request.user == target_member):
+        raise Http404()
+
+    # 그룹의 매니저는 탈퇴할 수 없음
+    # 다시 멤버 정보 페이지로 돌려보냄
+    if group.manager == request.user:
+        kwargs['_try_withdraw'] = True
+        kwargs['_withdraw_errormessage'] = "Manager can't exit from group."
+        return group_member_detail_view(request, *args, **kwargs)
+    else:
+        group.remove_member(request.user)
+        return redirect('users:group')

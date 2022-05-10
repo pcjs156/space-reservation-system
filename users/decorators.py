@@ -19,7 +19,7 @@ def group_member_only(func):
     @login_required
     def decorated(request, *args, **kwargs):
         # 그룹 멤버 검사
-        pk = kwargs.get('pk')
+        pk = kwargs.get('group_pk')
         group = get_object_or_404(Group, pk=pk)
         if not group.members.contains(request.user):
             raise Http404()

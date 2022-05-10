@@ -2,7 +2,7 @@ import string
 import random
 from datetime import datetime
 
-from django.db import models, IntegrityError
+from django.db import models, IntegrityError, transaction
 from django.contrib.auth.models import AbstractUser, Group
 from django.core.validators import MinLengthValidator
 
@@ -113,6 +113,20 @@ class Group(models.Model):
             if new_invite_code not in existing_invite_code:
                 break
         return new_invite_code
+
+    def remove_member(self, user: SystemUser):
+        assert self.members.filter(pk=user.pk).exists()
+        assert self.manager != user
+
+        with transaction.atomic():
+            # 권한 태그에서 사용자 삭제
+            for permission_tag in self.registered_permission_tags.all():
+                if permission_tag.members.filter(pk=user.pk).exists():
+                    permission_tag.members.remove(user)
+                    permission_tag.save()
+
+            # 그룹에서 사용자 삭제
+            self.members.remove(user)
 
 
 class PermissionTag(models.Model):
