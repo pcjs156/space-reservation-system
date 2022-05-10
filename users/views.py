@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 
 from utils.validation import check_not_null
 
-from .decorators import anonymous_user_only
+from .decorators import anonymous_user_only, group_manager_only, group_member_only
 from .models import SystemUser, Group
 
 
@@ -162,3 +162,13 @@ def group_detail_view(request, *args, **kwargs):
     context['group'] = group
 
     return render(request, 'users/group_detail.html', context)
+
+
+@group_member_only
+@group_manager_only
+def group_manage_view(request, *args, **kwargs):
+    context = dict()
+
+    context['group'] = kwargs['group']
+
+    return render(request, 'users/group_manage.html', context)
