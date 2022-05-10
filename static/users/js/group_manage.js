@@ -43,3 +43,10 @@ reissueInviteCodeBtn.addEventListener('click', () => {
     httpRequest.open('GET', requestURL);
     httpRequest.send();
 });
+
+// 그룹 정보 변경 Toast 관련
+const modifyFailedToast = new bootstrap.Toast(document.getElementById('modifyFailedToast'));
+modifyFailedToast.show();
+setTimeout(() => {
+    modifyFailedToast.hide();
+}, 3000);
