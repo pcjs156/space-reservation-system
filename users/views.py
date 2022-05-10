@@ -164,7 +164,6 @@ def group_detail_view(request, *args, **kwargs):
     return render(request, 'users/group_detail.html', context)
 
 
-@group_member_only
 @group_manager_only
 def group_manage_view(request, *args, **kwargs):
     context = dict()
@@ -172,3 +171,14 @@ def group_manage_view(request, *args, **kwargs):
     context['group'] = kwargs['group']
 
     return render(request, 'users/group_manage.html', context)
+
+
+@group_manager_only
+def group_delete_view(request, *args, **kwargs):
+    group = kwargs['group']
+    group.delete()
+    group.save()
+
+    del kwargs['group']
+
+    return redirect('users:group')
