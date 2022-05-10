@@ -15,7 +15,9 @@
             <th>ID</th>
             <th>Nickname</th>
             <th>Permission</th>
-            <th>etc</th>
+            {% if group.manager == user %}
+                <th>Manager operation</th>
+            {% endif %}
         </tr>
         </thead>
         <tbody>
@@ -39,9 +41,39 @@
                         <span class="badge rounded-pill bg-primary">{{ permission_tag.body }}</span>
                     {% endfor %}
                 </td>
-                <td>X</td>
+                {% if group.manager == user %}
+                    {# 그룹 사용자 퇴출 #}
+                    <td>
+                        <a href="#">Permission</a>
+                        {% if member|get_item:'username' != user.username %}
+                            / <a href="#">Block</a>
+                            / <a href="#">Kick</a>
+                        {% endif %}
+                    </td>
+                {% endif %}
             </tr>
         {% endfor %}
+        {% if group.manager == user %}
+            {# 그룹 등록 요청 처리 #}
+            {% for join_request in join_requests %}
+                <tr class="join-requested-row">
+                    <td>
+                    <span class="user-status-emoji">
+                        ⌛ {{ join_request.user.username }}
+                    </span>
+                    </td>
+                    <td>{{ join_request.user.nickname }}</td>
+                    <td>
+                        <span class="badge rounded-pill bg-warning">waiting for accept</span>
+                    </td>
+                    <td>
+                        <a href="{% url 'users:group_join_accept' group.pk join_request.user.pk join_request.pk %}">Accept</a>
+                        /
+                         <a href="{% url 'users:group_join_reject' group.pk join_request.user.pk join_request.pk %}">Reject</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% endif %}
         </tbody>
     </table>
 

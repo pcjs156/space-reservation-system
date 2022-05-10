@@ -175,6 +175,10 @@ def group_detail_view(request, *args, **kwargs):
     ]
     context['member_infos'] = member_infos
 
+    # 그룹 매니저인 경우 그룹 관리 기능 활성화
+    if group.manager == request.user:
+        context['join_requests'] = group.arrived_join_requests.all()
+
     return render(request, 'users/group_detail.html', context)
 
 
@@ -327,3 +331,29 @@ def group_withdraw_view(request, *args, **kwargs):
     else:
         group.remove_member(request.user)
         return redirect('users:group')
+
+
+@group_manager_only
+def accept_join_request_view(request, *args, **kwargs):
+    target_user_pk = kwargs['user_pk']
+    join_request_pk = kwargs['request_pk']
+
+    group = kwargs['group']
+    user = get_object_or_404(SystemUser, pk=target_user_pk)
+    join_request = get_object_or_404(JoinRequest, pk=join_request_pk, user=user, group=group)
+    join_request.accept()
+
+    return group_detail_view(request, *args, **kwargs)
+
+
+@group_manager_only
+def reject_join_request_view(request, *args, **kwargs):
+    target_user_pk = kwargs['user_pk']
+    join_request_pk = kwargs['request_pk']
+
+    group = kwargs['group']
+    user = get_object_or_404(SystemUser, pk=target_user_pk)
+    join_request = get_object_or_404(JoinRequest, pk=join_request_pk, user=user, group=group)
+    join_request.reject()
+
+    return group_detail_view(request, *args, **kwargs)

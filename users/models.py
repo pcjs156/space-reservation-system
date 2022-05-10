@@ -199,3 +199,11 @@ class JoinRequest(models.Model):
                 name='single join request',
             ),
         )
+
+    def accept(self):
+        self.group.members.add(self.user)
+        self.group.save()
+        self.delete()
+
+    def reject(self):
+        self.delete()
