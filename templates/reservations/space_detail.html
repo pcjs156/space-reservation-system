@@ -18,4 +18,10 @@
     <div>
         Term Body: {{ space.term.body|default:'None' }}
     </div>
+    <div>
+        <a href="{% url 'reservations:space_update' group.pk space.pk %}">수정</a>
+    </div>
+    <div>
+        <a href="{% url 'reservations:space_delete' group.pk space.pk %}">삭제</a>
+    </div>
 {% endblock %}

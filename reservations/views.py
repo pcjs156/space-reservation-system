@@ -77,7 +77,7 @@ def space_list_view(request, *args, **kwargs):
 @group_manager_only
 def space_detail_view(request, *args, **kwargs):
     space_pk = kwargs['space_pk']
-    space = get_object_or_404(Space, pk=space_pk)
+    space = get_object_or_404(Space, group=kwargs['group'], pk=space_pk)
 
     group = kwargs['group']
 
@@ -125,3 +125,54 @@ def space_create_view(request, *args, **kwargs):
         )
 
         return space_list_view(request, *args, **kwargs)
+
+
+@group_manager_only
+def space_update_view(request, *args, **kwargs):
+    context = dict()
+    group = kwargs['group']
+    context['group'] = group
+
+    space = get_object_or_404(Space, group=group, pk=int(kwargs['space_pk']))
+    context['space'] = space
+
+    if request.method == 'GET':
+        terms = group.registered_terms.all()
+        context['terms'] = terms
+        context['current_term'] = space.term
+
+        permission_tags = group.registered_permission_tags.all()
+        context['permission_tags'] = permission_tags
+        context['current_permission_tag'] = space.required_permission
+
+        return render(request, 'reservations/space_update.html', context)
+
+    elif request.method == 'POST':
+        term_pk = int(request.POST['term'])
+        permission_pk = int(request.POST['permission'])
+        new_name = request.POST['name']
+
+        if term_pk != -1:
+            new_term = get_object_or_404(Term, pk=term_pk)
+        else:
+            new_term = None
+
+        if permission_pk != -1:
+            new_permission_tag = get_object_or_404(PermissionTag, pk=permission_pk)
+        else:
+            new_permission_tag = None
+
+        space.name = new_name
+        space.term = new_term
+        space.required_permission = new_permission_tag
+        space.save()
+
+        return space_detail_view(request, *args, **kwargs)
+
+
+@group_manager_only
+def space_delete_view(request, *args, **kwargs):
+    space = get_object_or_404(Space, group=kwargs['group'], pk=int(kwargs['space_pk']))
+    space.delete()
+
+    return space_list_view(request, *args, **kwargs)
