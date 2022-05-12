@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load users_filters %}
+
+{% block head_content %}
+{% endblock %}
+
+{% block body_content %}
+    <form action="{% url 'reservations:term_create' group.pk %}" method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="termTitleInput" class="form-label">Title</label>
+            <input type="text" class="form-control" id="termTitleInput" name="title" required>
+        </div>
+        <div class="mb-3">
+            <label for="termBodyInput" class="form-label">Content</label>
+            <textarea class="form-control" id="termBodyInput" rows="3" name="body" required></textarea>
+        </div>
+        <input type="submit" value="Create!">
+    </form>
+{% endblock %}

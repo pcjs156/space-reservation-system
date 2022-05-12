@@ -87,5 +87,8 @@
         <div>
             <a href="{% url 'users:group_manage' group.pk %}">Goto managing page</a>
         </div>
+        <div>
+            <a href="{% url 'reservations:term_list' group.pk %}">약관 관리</a>
+        </div>
     {% endif %}
 {% endblock %}

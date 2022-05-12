@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load users_filters %}
+
+{% block head_content %}
+{% endblock %}
+
+{% block body_content %}
+    <div>
+        <ul>
+            {% for term in registered_terms %}
+                <li>{{ term.body }} (<a href="{% url 'reservations:term_delete' group.pk term.pk %}">Delete</a>) (<a
+                        href="{% url 'reservations:term_update' group.pk term.pk %}">Update</a>)
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div>
+        <a href="{% url 'reservations:term_create' group.pk %}">Create new term</a>
+    </div>
+{% endblock %}
