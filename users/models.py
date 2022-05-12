@@ -1,10 +1,13 @@
 import string
 import random
 from datetime import datetime
+from typing import Union
 
 from django.db import models, IntegrityError, transaction
 from django.contrib.auth.models import AbstractUser, Group
 from django.core.validators import MinLengthValidator
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 
 
 class SystemUser(AbstractUser):
@@ -128,6 +131,17 @@ class Group(models.Model):
             # 그룹에서 사용자 삭제
             self.members.remove(user)
 
+    def member_check(self, user: Union[SystemUser, int]):
+        if isinstance(user, int):
+            user = get_object_or_404(SystemUser, pk=user)
+
+        try:
+            user = self.members.get(pk=user.pk)
+        except SystemUser.DoesNotExist:
+            raise Http404()
+
+        return user
+
 
 class PermissionTag(models.Model):
     """
@@ -145,6 +159,13 @@ class PermissionTag(models.Model):
     class Meta:
         verbose_name = '권한 태그'
         verbose_name_plural = '권한 태그 목록'
+        constraints = (
+            # 그룹 내의 모든 tag는 서로 다른 body를 가지고 있음
+            models.UniqueConstraint(
+                fields=['group', 'body'],
+                name='unique permission tag in group',
+            ),
+        )
 
 
 class Block(models.Model):

@@ -17,6 +17,8 @@ urlpatterns = [
     path('group/<int:group_pk>/manage/<int:user_pk>/join/<int:request_pk>/reject/', views.reject_join_request_view,
          name='group_join_reject'),
     path('group/<int:group_pk>/manage/<int:member_pk>/kick/', views.kick_group_member_view, name='group_member_kick'),
+    path('group/<int:group_pk>/manage/<int:member_pk>/permission/', views.group_member_permission_view,
+         name='group_member_permission'),
     path('group/<int:group_pk>/manage/delete/', views.group_delete_view, name='group_delete'),
     path('group/<int:group_pk>/manage/reissue-intie-code/', views.group_invite_code_change_view,
          name='group_reissue_invite_code'),

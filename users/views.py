@@ -1,5 +1,5 @@
 import member as member
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from utils.validation import check_not_null
 
 from .decorators import anonymous_user_only, group_manager_only, group_member_only
-from .models import SystemUser, Group, JoinRequest
+from .models import SystemUser, Group, JoinRequest, PermissionTag
 from .utils import sort_group_member
 
 
@@ -304,10 +304,9 @@ def group_member_detail_view(request, *args, **kwargs):
         context['try_withdraw'] = True
         context['try_withdraw_errormessage'] = _withdraw_errormessage
 
-    target_member = get_object_or_404(SystemUser, pk=member_pk)
-
     # 조회/수정의 목표가 되는 사용자가 해당 그룹에 존재하며, 요청한 본인이 아닌 경우 404 error
-    if not (group.members.filter(pk=member_pk) and request.user == target_member):
+    target_member = group.member_check(member_pk)
+    if request.user != target_member:
         raise Http404()
 
     return render(request, 'users/group_member_detail.html', context)
@@ -318,9 +317,9 @@ def group_withdraw_view(request, *args, **kwargs):
     group = kwargs['group']
     member_pk = kwargs['member_pk']
 
-    target_member = get_object_or_404(SystemUser, pk=member_pk)
     # 조회/수정의 목표가 되는 사용자가 해당 그룹에 존재하며, 요청한 본인이 아닌 경우 404 error
-    if not (group.members.filter(pk=member_pk) and request.user == target_member):
+    target_member = group.member_check(member_pk)
+    if request.user != target_member:
         raise Http404()
 
     # 그룹의 매니저는 탈퇴할 수 없음
@@ -340,8 +339,8 @@ def accept_join_request_view(request, *args, **kwargs):
     join_request_pk = kwargs['request_pk']
 
     group = kwargs['group']
-    user = get_object_or_404(SystemUser, pk=target_user_pk)
-    join_request = get_object_or_404(JoinRequest, pk=join_request_pk, user=user, group=group)
+    target_member = group.member_check(target_user_pk)
+    join_request = get_object_or_404(JoinRequest, pk=join_request_pk, user=target_member, group=group)
     join_request.accept()
 
     return group_detail_view(request, *args, **kwargs)
@@ -353,8 +352,8 @@ def reject_join_request_view(request, *args, **kwargs):
     join_request_pk = kwargs['request_pk']
 
     group = kwargs['group']
-    user = get_object_or_404(SystemUser, pk=target_user_pk)
-    join_request = get_object_or_404(JoinRequest, pk=join_request_pk, user=user, group=group)
+    target_member = group.member_check(target_user_pk)
+    join_request = get_object_or_404(JoinRequest, pk=join_request_pk, user=target_member, group=group)
     join_request.reject()
 
     return group_detail_view(request, *args, **kwargs)
@@ -365,10 +364,57 @@ def kick_group_member_view(request, *args, **kwargs):
     target_member_pk = kwargs['member_pk']
 
     group = kwargs['group']
-    user = get_object_or_404(SystemUser, pk=target_member_pk)
-    if not group.members.filter(pk=user.pk).exists():
-        raise Http404()
-
-    group.remove_member(user)
+    target_member = group.member_check(target_member_pk)
+    group.remove_member(target_member)
 
     return group_detail_view(request, *args, **kwargs)
+
+
+@group_manager_only
+def group_member_permission_view(request, *args, **kwargs):
+    context = dict()
+
+    target_member_pk = kwargs['member_pk']
+
+    group = kwargs['group']
+    context['group'] = group
+
+    target_member = group.member_check(target_member_pk)
+    context['member'] = target_member
+
+    if request.method == 'GET':
+        context['tag_edit'] = False
+        context['permission_str'] = ' '.join(map(lambda t: t.body, target_member.get_permission_tags_in_group(group)))
+
+        return render(request, 'users/group_member_permission.html', context)
+
+    elif request.method == 'POST':
+        context['tag_edit'] = True
+
+        permission_tag_str = request.POST.get('permission_str', '')
+        tag_bodies = permission_tag_str.split()
+
+        with transaction.atomic():
+            prev_tags = set(target_member.get_permission_tags_in_group(group))
+
+            for body in tag_bodies:
+                tag, is_created = PermissionTag.objects.get_or_create(group=group, body=body)
+
+                if is_created:
+                    tag.members.add(target_member)
+                else:
+                    # 원래 멤버가 사용하던 태그는 prev_tags에서 지워줌
+                    # (남은 태그들 중 해당 멤버만 사용하던 태그가 있으면 삭제할 것)
+                    prev_tags.remove(tag)
+
+            # 더이상 사용하지 않는 태그에서 해당 멤버를 삭제
+            for tag in prev_tags:
+                tag.members.remove(target_member)
+                if len(tag.members.all()) > 0:
+                    tag.save()
+                else:
+                    tag.delete()
+
+        context['permission_str'] = ' '.join(map(lambda t: t.body, target_member.get_permission_tags_in_group(group)))
+
+        return render(request, 'users/group_member_permission.html', context)

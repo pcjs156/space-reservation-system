@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load users_filters %}
+
+{% block head_content %}
+{% endblock %}
+
+{% block body_content %}
+    <h2>Modifying permissions of '{{ member.nickname }}({{ member.username }})'</h2>
+
+    {% if tag_edit is not None and tag_edit is True %}
+        <div class="alert alert-success" role="alert">
+            Success!
+        </div>
+    {% endif %}
+
+    <form action="{% url 'users:group_member_permission' group.pk member.pk %}" method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="permissionStringInput" class="form-label">Permission tags</label>
+            <input type="text" class="form-control" id="permissionStringInput" name="permission_str"
+                   aria-describedby="permissionStringInputHelp" value="{{ permission_str }}">
+            <div id="permissionStringInputHelp" class="form-text">공백 문자(space)를 기준으로 권한 태그가 분리됩니다.</div>
+            <input type="submit" value="Modify">
+        </div>
+    </form>
+{% endblock %}

@@ -44,7 +44,7 @@
                 {% if group.manager == user %}
                     {# 그룹 사용자 퇴출 #}
                     <td>
-                        <a href="#">Permission</a>
+                        <a href="{% url 'users:group_member_permission' group.pk member.pk %}">Permission</a>
                         {% if member|get_item:'username' != user.username %}
                             / <a href="#">Block</a>
                             / <a href="{% url 'users:group_member_kick' group.pk member|get_item:'pk' %}">Kick</a>
@@ -69,7 +69,7 @@
                     <td>
                         <a href="{% url 'users:group_join_accept' group.pk join_request.user.pk join_request.pk %}">Accept</a>
                         /
-                         <a href="{% url 'users:group_join_reject' group.pk join_request.user.pk join_request.pk %}">Reject</a>
+                        <a href="{% url 'users:group_join_reject' group.pk join_request.user.pk join_request.pk %}">Reject</a>
                     </td>
                 </tr>
             {% endfor %}
