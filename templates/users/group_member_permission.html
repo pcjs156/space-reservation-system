@@ -24,4 +24,12 @@
             <input type="submit" value="Modify">
         </div>
     </form>
+
+    {% if member != group.member %}
+        <div>Group manager 위임</div>
+        <form action="{% url 'users:group_manager_handover' group.pk member.pk %}" method="post">
+            {% csrf_token %}
+            <input type="submit" value="승인">
+        </form>
+    {% endif %}
 {% endblock %}

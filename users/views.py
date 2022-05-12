@@ -418,3 +418,17 @@ def group_member_permission_view(request, *args, **kwargs):
         context['permission_str'] = ' '.join(map(lambda t: t.body, target_member.get_permission_tags_in_group(group)))
 
         return render(request, 'users/group_member_permission.html', context)
+
+
+@group_manager_only
+def group_manager_handover_view(request, *args, **kwargs):
+    if request.method == 'POST':
+        target_member_pk = kwargs['member_pk']
+
+        group = kwargs['group']
+        target_member = group.member_check(target_member_pk)
+
+        group.manager = target_member
+        group.save()
+
+        return group_detail_view(request, *args, **kwargs)
