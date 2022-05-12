@@ -14,6 +14,8 @@ class Term(models.Model):
 
     group = models.ForeignKey(Group, null=False, on_delete=models.CASCADE,
                               verbose_name='대상 그룹', related_name='registered_terms')
+
+    title = models.CharField('제목', max_length=255, null=False)
     body = models.TextField('내용', null=False, blank=True)
 
 
