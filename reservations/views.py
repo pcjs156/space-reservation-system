@@ -75,6 +75,20 @@ def space_list_view(request, *args, **kwargs):
 
 
 @group_manager_only
+def space_detail_view(request, *args, **kwargs):
+    space_pk = kwargs['space_pk']
+    space = get_object_or_404(Space, pk=space_pk)
+
+    group = kwargs['group']
+
+    context = dict()
+    context['group'] = group
+    context['space'] = space
+
+    return render(request, 'reservations/space_detail.html', context)
+
+
+@group_manager_only
 def space_create_view(request, *args, **kwargs):
     context = dict()
     group = kwargs['group']

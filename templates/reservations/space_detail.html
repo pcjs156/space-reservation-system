@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load users_filters %}
+
+{% block head_content %}
+{% endblock %}
+
+{% block body_content %}
+    <div>
+        Name: {{ space.name }}
+    </div>
+    <div>
+        Required permission: {{ space.required_permission.body|default:'None' }}
+    </div>
+    <div>
+        Term: {{ space.term.title }}
+    </div>
+    <div>
+        Term Body: {{ space.term.body|default:'None' }}
+    </div>
+{% endblock %}

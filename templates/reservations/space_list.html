@@ -15,7 +15,10 @@
             {% for space in group.registered_spaces.all %}
                 <li>
                     <div>
-                        {{ space.name }} (term: {{ space.term.pk }} / permission: {{ space.required_permission.body }})
+                        <a href="{% url 'reservations:space_detail' group.pk space.pk %}">
+                            {{ space.name }} (term: {{ space.term.pk }} /
+                            permission: {{ space.required_permission.body }})
+                        </a>
                     </div>
                 </li>
             {% endfor %}
