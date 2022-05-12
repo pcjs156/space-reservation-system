@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load users_filters %}
+
+{% block head_content %}
+{% endblock %}
+
+{% block body_content %}
+    <form action="{% url 'reservations:space_create' group.pk %}" method="post">
+        {% csrf_token %}
+        <select class="form-select" name="term">
+            <option value="-1" selected>약관 없음</option>
+            {% for term in terms %}
+                <option value="{{ term.pk }}">{{ term.title }}</option>
+            {% endfor %}
+        </select>
+        <select class="form-select" name="permission">
+            <option value="-1" selected>요구 권한 없음</option>
+            {% for permission_tag in permission_tags %}
+                <option value="{{ permission_tag.pk }}">{{ permission_tag.body }}</option>
+            {% endfor %}
+        </select>
+        <div class="mb-3">
+            <label for="termTitleInput" class="form-label">Space name</label>
+            <input type="text" class="form-control" id="termTitleInput" name="name" required>
+        </div>
+        <div class="mb-3">
+            <label for="termBodyInput" class="form-label">Content</label>
+            <textarea class="form-control" id="termBodyInput" rows="3" name="body" required></textarea>
+        </div>
+        <input type="submit" value="Create!">
+    </form>
+{% endblock %}

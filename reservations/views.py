@@ -1,7 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 
-from reservations.models import Term
-from users.decorators import group_manager_only
+from reservations.models import Term, Space
+from users.decorators import group_manager_only, group_member_only
+from users.models import PermissionTag
 
 
 @group_manager_only
@@ -63,3 +64,50 @@ def term_update_view(request, *args, **kwargs):
         target_term.save()
 
         return term_list_view(request, *args, **kwargs)
+
+
+@group_member_only
+def space_list_view(request, *args, **kwargs):
+    context = dict()
+    context['group'] = kwargs['group']
+
+    return render(request, 'reservations/space_list.html', context)
+
+
+@group_manager_only
+def space_create_view(request, *args, **kwargs):
+    context = dict()
+    group = kwargs['group']
+    context['group'] = group
+
+    if request.method == 'GET':
+        terms = group.registered_terms.all()
+        context['terms'] = terms
+
+        permission_tags = group.registered_permission_tags.all()
+        context['permission_tags'] = permission_tags
+
+        return render(request, 'reservations/space_create.html', context)
+
+    elif request.method == 'POST':
+        term_pk = int(request.POST['term'])
+        permission_pk = int(request.POST['permission'])
+        name = request.POST['name']
+
+        if term_pk != -1:
+            term = get_object_or_404(Term, pk=term_pk)
+        else:
+            term = None
+
+        if permission_pk != -1:
+            permission_tag = get_object_or_404(PermissionTag, pk=permission_pk)
+        else:
+            permission_tag = None
+
+        Space.objects.create(
+            group=group, term=term, name=name,
+            term_body='' if term is None else term.body,
+            required_permission=permission_tag
+        )
+
+        return space_list_view(request, *args, **kwargs)

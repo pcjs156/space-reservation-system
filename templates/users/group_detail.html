@@ -83,12 +83,16 @@
         </a>
     </div>
 
+    <div>
+        <a href="{% url 'reservations:space_list' group.pk %}">공간 목록</a>
+    </div>
+
     {% if group.manager == request.user %}
         <div>
             <a href="{% url 'users:group_manage' group.pk %}">Goto managing page</a>
-        </div>
-        <div>
-            <a href="{% url 'reservations:term_list' group.pk %}">약관 관리</a>
-        </div>
-    {% endif %}
+            </div>
+            <div>
+                <a href="{% url 'reservations:term_list' group.pk %}">약관 관리</a>
+            </div>
+        {% endif %}
 {% endblock %}
