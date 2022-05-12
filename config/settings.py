@@ -44,6 +44,7 @@ THIRD_PARTY_APPS = []
 OPERATING_APPS = [
     'users.apps.UsersConfig',
     'commons.apps.CommonsConfig',
+    'reservations.apps.ReservationsConfig',
 ]
 
 INSTALLED_APPS = DJANGO_DEFAULT_APPS + THIRD_PARTY_APPS + OPERATING_APPS
