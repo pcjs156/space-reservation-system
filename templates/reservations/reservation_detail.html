@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load users_filters %}
+
+{% block head_content %}
+{% endblock %}
+
+{% block body_content %}
+    <div>Reservation #{{ reservation.pk }} in {{ reservation.space.name }}</div>
+    <div>from: {{ reservation.dt_from }}</div>
+    <div>to: {{ reservation.dt_to }}</div>
+
+    {% if reservation.member == request.user or request.user == group.manager %}
+        <div>
+            <a href="{% url 'reservations:reservation_delete' group.pk space.pk reservation.pk %}">삭제</a>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 from users.models import Group, SystemUser, PermissionTag
 
@@ -17,6 +18,10 @@ class Term(models.Model):
 
     title = models.CharField('제목', max_length=255, null=False)
     body = models.TextField('내용', null=False, blank=True)
+
+    class Meta:
+        verbose_name = '약관'
+        verbose_name_plural = '약관 목록'
 
 
 class Space(models.Model):
@@ -43,6 +48,10 @@ class Space(models.Model):
     required_permission = models.ForeignKey(PermissionTag, on_delete=models.PROTECT, null=True,
                                             related_name='requiring_spaces', verbose_name='요구 권한')
 
+    class Meta:
+        verbose_name = '공간'
+        verbose_name_plural = '공간 목록'
+
 
 class Reservation(models.Model):
     """
@@ -61,3 +70,49 @@ class Reservation(models.Model):
 
     dt_from = models.DateTimeField('예약 시작 일시', blank=False, null=False)
     dt_to = models.DateTimeField('예약 해제 일시', blank=False, null=False)
+
+    class Meta:
+        verbose_name = '예약'
+        verbose_name_plural = '예약 목록'
+
+    def __str__(self):
+        return self.member.username
+
+    @classmethod
+    def get_reservation_of_week(cls, target_day: timezone.datetime, space: Space):
+        target_weekday = target_day.weekday()
+        monday_start = target_day - timezone.timedelta(days=target_weekday)
+        sunday_end = monday_start + timezone.timedelta(days=7) - timezone.timedelta(seconds=1)
+
+        in_range_reservations = Reservation.objects.filter(space=space, dt_from__gte=monday_start,
+                                                           dt_to__lte=sunday_end)
+
+        reservation_per_weekdays = []
+        for i in range(7):
+            tmp = {_h: None for _h in range(24)}
+
+            start = monday_start + timezone.timedelta(days=i)
+            end = start + timezone.timedelta(days=1)
+
+            h = start
+            while h < end:
+                for reservation in in_range_reservations.filter(dt_from__gte=h,
+                                                                dt_to__lt=h + timezone.timedelta(hours=1)):
+                    tmp[h.hour] = reservation
+                h += timezone.timedelta(hours=1)
+            reservation_per_weekdays.append(tmp)
+
+        return reservation_per_weekdays
+
+    @staticmethod
+    def get_datetime(year, month, day):
+        if not (year and month and day):
+            target_day = timezone.now()
+        else:
+            try:
+                target_day = timezone.datetime(int(year), int(month), int(day))
+            except Exception:
+                return None
+
+        target_day = target_day.replace(hour=0, minute=0, second=0, microsecond=0)
+        return target_day

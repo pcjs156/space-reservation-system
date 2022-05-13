@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load users_filters %}
+
+{% block head_content %}
+    <link href="{% static 'users/css/group_detail.css' %}" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block body_content %}
+    {% if not valid_blocks %}
+        <div>제한 내역이 없습니다.</div>
+    {% else %}
+        <div>제한 내역 목록</div>
+        <ul>
+            {% for block in valid_blocks %}
+                <li>{{ block.dt_from }} ~ {{ block.dt_to }} (<a
+                        href="{% url 'users:delete_group_member_block' group.pk member.pk block.pk %}">삭제</a>)
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div>
+        <div>제한하기</div>
+        {% if past_dt is not None and past_dt is True %}
+            <div>제한 종료 일시는 현 시점 이후여야 합니다.</div>
+        {% endif %}
+        <form action="{% url 'users:group_member_block' group.pk member.pk %}" method="post">
+            <div>제한 종료 일시</div>
+            <input type="date" name="block_to_date" required>
+            <input type="time" name="block_to_time" required>
+            </p>
+
+            {% csrf_token %}
+            <input type="submit" value="생성">
+        </form>
+    </div>
+{% endblock %}

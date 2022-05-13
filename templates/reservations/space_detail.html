@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load reservations_filters %}
 {% load users_filters %}
 
 {% block head_content %}
+    <link href="{% static 'reservations/css/space_detail.css' %}" rel="stylesheet" type="text/css">
 {% endblock %}
 
 {% block body_content %}
@@ -18,10 +20,74 @@
     <div>
         Term Body: {{ space.term.body|default:'None' }}
     </div>
+
     <div>
-        <a href="{% url 'reservations:space_update' group.pk space.pk %}">수정</a>
+        <div>
+            from {{ monday_dt }}(MON), to {{ sunday_dt }}(SUN)
+        </div>
+        <table class="table table-bordered table-hover">
+            <thead>
+            <tr class="table-secondary">
+                <th scope="col">Time</th>
+                <th scope="col">Monday</th>
+                <th scope="col">Tuesday</th>
+                <th scope="col">Wednesday</th>
+                <th scope="col">Thursday</th>
+                <th scope="col">Friday</th>
+                <th scope="col">Saturday</th>
+                <th scope="col">Sunday</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for h in hour_24 %}
+                <tr scope="row">
+                    <td class="table-secondary" style="text-align:center;">{{ time_index|index:h }}</td>
+                    {% for wd in weekday_7 %}
+                        {% if reservation_of_week|index:wd|index:h|default:'' != '' %}
+                            <td class="table-danger booked"
+                                detail-link="{% url 'reservations:reservation_detail' group.pk space.pk reservation_of_week|index:wd|index:h|get_obj_attr:'pk' %}">
+                                {{ reservation_of_week|index:wd|index:h|get_obj_attr:'member' }}
+                                {% else %}
+                            <td class="table-success not-booked"
+                                detail-link="{% url 'reservations:reservation_create' group.pk space.pk %}?monday_year={{ monday|get_obj_attr:'year' }}&monday_month={{ monday|get_obj_attr:'month' }}&monday_day={{ monday|get_obj_attr:'day' }}&wd={{ wd }}&hour={{ h }}">
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div>
+        <div>
+            <a href="{% url 'reservations:space_detail' group.pk space.pk %}?{{ prev_monday_querystring }}">
+                이전주
+            </a>
+        </div>
+        <div>
+            <a href="{% url 'reservations:space_detail' group.pk space.pk %}?{{ today_querystring }}">
+                오늘
+            </a>
+        </div>
+        <div>
+            <a href="{% url 'reservations:space_detail' group.pk space.pk %}?{{ next_monday_querystring }}">
+                다음주
+            </a>
+        </div>
     </div>
     <div>
-        <a href="{% url 'reservations:space_delete' group.pk space.pk %}">삭제</a>
+        <a href="{% url 'reservations:reservation_create' group.pk space.pk %}">예약</a>
     </div>
+
+    {% if user == group.manager %}
+        <div>
+            <a href="{% url 'reservations:space_update' group.pk space.pk %}">수정</a>
+        </div>
+        <div>
+            <a href="{% url 'reservations:space_delete' group.pk space.pk %}">삭제</a>
+        </div>
+    {% endif %}
+
+    <script type="text/javascript" src="{% static 'reservations/js/space_detail.js' %}"></script>
 {% endblock %}

@@ -46,7 +46,7 @@
                     <td>
                         <a href="{% url 'users:group_member_permission' group.pk member.pk %}">Permission</a>
                         {% if member|get_item:'username' != user.username %}
-                            / <a href="#">Block</a>
+                            / <a href="{% url 'users:group_member_block' group.pk member.pk %}">Block</a>
                             / <a href="{% url 'users:group_member_kick' group.pk member|get_item:'pk' %}">Kick</a>
                         {% endif %}
                     </td>
@@ -90,9 +90,9 @@
     {% if group.manager == request.user %}
         <div>
             <a href="{% url 'users:group_manage' group.pk %}">Goto managing page</a>
-            </div>
-            <div>
-                <a href="{% url 'reservations:term_list' group.pk %}">약관 관리</a>
-            </div>
-        {% endif %}
+        </div>
+        <div>
+            <a href="{% url 'reservations:term_list' group.pk %}">약관 관리</a>
+        </div>
+    {% endif %}
 {% endblock %}

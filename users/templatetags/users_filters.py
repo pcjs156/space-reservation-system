@@ -12,3 +12,8 @@ def call_method(obj, method_name, *args):
 @register.filter
 def get_item(dictionary, key):
     return dictionary.get(key)
+
+
+@register.filter
+def get_obj_attr(obj, attr):
+    return getattr(obj, attr)

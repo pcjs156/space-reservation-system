@@ -1,6 +1,5 @@
 import string
 import random
-from datetime import datetime
 from typing import Union
 
 from django.db import models, IntegrityError, transaction
@@ -8,6 +7,7 @@ from django.contrib.auth.models import AbstractUser, Group
 from django.core.validators import MinLengthValidator
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 
 class SystemUser(AbstractUser):
@@ -37,8 +37,9 @@ class SystemUser(AbstractUser):
 
     def get_valid_blocks_in_group(self, group: Group):
         entire_blocks = self.get_entire_blocks_in_group(group)
-        now = datetime.now()
-        valid_blocks = entire_blocks.filter(dt_from__gte=now, dt_to__lte=now)
+        now = timezone.now()
+        valid_blocks = entire_blocks.filter(dt_from__lte=now, dt_to__gte=now)
+
         return valid_blocks
 
 

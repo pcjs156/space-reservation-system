@@ -14,4 +14,10 @@ urlpatterns = [
     path('spaces/<int:group_pk>/<int:space_pk>/update/', views.space_update_view, name='space_update'),
     path('spaces/<int:group_pk>/<int:space_pk>/delete/', views.space_delete_view, name='space_delete'),
     path('spaces/<int:group_pk>/create/', views.space_create_view, name='space_create'),
+    path('spaces/<int:group_pk>/<int:space_pk>/reservation/create/',
+         views.create_reservation_view, name='reservation_create'),
+    path('spaces/<int:group_pk>/<int:space_pk>/reservation/<int:reservation_pk>/',
+         views.reservation_detail_view, name='reservation_detail'),
+    path('spaces/<int:group_pk>/<int:space_pk>/reservation/<int:reservation_pk>/delete',
+         views.reservation_delete_view, name='reservation_delete'),
 ]

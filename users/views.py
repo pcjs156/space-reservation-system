@@ -1,14 +1,14 @@
-import member as member
 from django.db import IntegrityError, transaction
 from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone, dateparse
 
 from utils.validation import check_not_null
 
 from .decorators import anonymous_user_only, group_manager_only, group_member_only
-from .models import SystemUser, Group, JoinRequest, PermissionTag
+from .models import SystemUser, Group, JoinRequest, PermissionTag, Block
 from .utils import sort_group_member
 
 
@@ -339,8 +339,8 @@ def accept_join_request_view(request, *args, **kwargs):
     join_request_pk = kwargs['request_pk']
 
     group = kwargs['group']
-    target_member = group.member_check(target_user_pk)
-    join_request = get_object_or_404(JoinRequest, pk=join_request_pk, user=target_member, group=group)
+    target_user = get_object_or_404(SystemUser, pk=target_user_pk)
+    join_request = get_object_or_404(JoinRequest, pk=join_request_pk, user=target_user, group=group)
     join_request.accept()
 
     return group_detail_view(request, *args, **kwargs)
@@ -396,25 +396,28 @@ def group_member_permission_view(request, *args, **kwargs):
 
         with transaction.atomic():
             prev_tags = set(target_member.get_permission_tags_in_group(group))
+            print(list(map(lambda x: x.body, prev_tags)))
 
             for body in tag_bodies:
                 tag, is_created = PermissionTag.objects.get_or_create(group=group, body=body)
 
                 if is_created:
                     tag.members.add(target_member)
+                    tag.save()
                 else:
                     # 원래 멤버가 사용하던 태그는 prev_tags에서 지워줌
                     # (남은 태그들 중 해당 멤버만 사용하던 태그가 있으면 삭제할 것)
-                    prev_tags.remove(tag)
+                    if tag in prev_tags:
+                        prev_tags.remove(tag)
+                    else:
+                        tag.members.add(target_member)
 
             # 더이상 사용하지 않는 태그에서 해당 멤버를 삭제
             for tag in prev_tags:
                 tag.members.remove(target_member)
-                if len(tag.members.all()) > 0:
-                    tag.save()
-                else:
-                    tag.delete()
+                tag.save()
 
+        print(target_member.get_permission_tags_in_group(group))
         context['permission_str'] = ' '.join(map(lambda t: t.body, target_member.get_permission_tags_in_group(group)))
 
         return render(request, 'users/group_member_permission.html', context)
@@ -432,3 +435,53 @@ def group_manager_handover_view(request, *args, **kwargs):
         group.save()
 
         return group_detail_view(request, *args, **kwargs)
+
+
+@group_manager_only
+def block_list_view(request, *args, **kwargs):
+    context = dict()
+
+    group = kwargs['group']
+    context['group'] = group
+
+    target_member_pk = kwargs['member_pk']
+    target_member = group.member_check(target_member_pk)
+    context['member'] = target_member
+
+    valid_blocks = target_member.get_valid_blocks_in_group(group)
+    context['valid_blocks'] = valid_blocks
+
+    if request.method == 'GET':
+        return render(request, 'users/block_list.html', context)
+
+    elif request.method == 'POST':
+        block_to_time = request.POST.get('block_to_time')
+        block_to_date = request.POST.get('block_to_date')
+
+        block_to = dateparse.parse_datetime(block_to_date + 'T' + block_to_time)
+        now = timezone.now()
+
+        if now > block_to:
+            context['past_dt'] = True
+            return render(request, 'users/block_list.html', context)
+        else:
+            block = Block.objects.create(group=group, member=target_member,
+                                         dt_from=now, dt_to=block_to)
+            return group_detail_view(request, *args, **kwargs)
+
+
+@group_manager_only
+def block_delete_view(request, *args, **kwargs):
+    context = dict()
+
+    group = kwargs['group']
+    context['group'] = group
+
+    target_member_pk = kwargs['member_pk']
+    target_member = group.member_check(target_member_pk)
+    context['member'] = target_member
+
+    block = get_object_or_404(Block, pk=kwargs['block_pk'])
+    block.delete()
+
+    return block_list_view(request, *args, **kwargs)

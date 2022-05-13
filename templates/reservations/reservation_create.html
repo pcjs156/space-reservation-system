@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load users_filters %}
+{% load reservations_filters %}
+
+{% block head_content %}
+{% endblock %}
+
+{% block body_content %}
+    {% if blocked %}
+        <div>사용이 제한되었습니다.</div>
+        <div>
+            <div>제한 내역</div>
+            <ul>
+                {% for block in valid_blocks %}
+                    <li>{{ block }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% elif permission_rejected %}
+        <div>권한이 없습니다.</div>
+        <div>요구 권한: {{ space.required_permission }}</div>
+    {% elif already_booked %}
+        <div>Can't create reservation!</div>
+    {% else %}
+        <h3>공간 예약: {{ space.name }}</h3>
+        <div>{{ reservation_year }}/{{ reservation_month }}/{{ reservation_day }}({{ reservation_weekday }}요일), {{ reservation_hour|zero_left_padding }}:00
+            ~
+            {{ reservation_hour|add:1|zero_left_padding }}:00
+        </div>
+        <div>
+            <form action="{% url 'reservations:reservation_create' group.pk space.pk %}" method="POST">
+                {% if space.term is None %}
+                    등록된 약관이 없습니다.
+                {% else %}
+                    <div>약관내용</div>
+                    <textarea disabled>{{ space.term_body }}</textarea>
+                {% endif %}
+
+                {% csrf_token %}
+                <input type="number" name="year" value="{{ reservation_year }}" hidden>
+                <input type="number" name="month" value="{{ reservation_month }}" hidden>
+                <input type="number" name="day" value="{{ reservation_day }}" hidden>
+                <input type="number" name="hour" value="{{ reservation_hour }}" hidden>
+
+                <input type="submit" value="예약">
+            </form>
+        </div>
+    {% endif %}
+{% endblock %}
