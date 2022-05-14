@@ -2,6 +2,13 @@
 {% load static %}
 
 {% block body_content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'commons:main' %}">Main</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Group list</li>
+        </ol>
+    </nav>
+
     <h3>관리중인 그룹 목록</h3>
     <table class="table">
         <thead>

@@ -7,6 +7,14 @@
 {% endblock %}
 
 {% block body_content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'commons:main' %}">Main</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'users:group' %}">Group list</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'users:group_detail' group.pk %}">Group main</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Block list ({{ member.username }})</li>
+        </ol>
+    </nav>
     {% if not valid_blocks %}
         <div>제한 내역이 없습니다.</div>
     {% else %}
