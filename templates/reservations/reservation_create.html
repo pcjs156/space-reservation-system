@@ -7,6 +7,17 @@
 {% endblock %}
 
 {% block body_content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'commons:main' %}">Main</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'users:group' %}">Group list</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'users:group_detail' group.pk %}">Group main</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'reservations:space_list' group.pk %}">Spaces</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'reservations:space_detail' group.pk space.pk %}">Space
+                detail</a></li>
+            <li class="breadcrumb-item active" aria-current="page">New reservation</li>
+        </ol>
+    </nav>
     {% if blocked %}
         <div>사용이 제한되었습니다.</div>
         <div>

@@ -6,6 +6,15 @@
 {% endblock %}
 
 {% block body_content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'commons:main' %}">Main</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'users:group' %}">Group list</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'users:group_detail' group.pk %}">Group main</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'reservations:term_list' group.pk %}">Terms</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Term update</li>
+        </ol>
+    </nav>
     <form action="{% url 'reservations:term_update' group.pk target_term.pk %}" method="post">
         {% csrf_token %}
         <div class="mb-3">

@@ -8,6 +8,16 @@
 {% endblock %}
 
 {% block body_content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'commons:main' %}">Main</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'users:group' %}">Group list</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'users:group_detail' group.pk %}">Group main</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'reservations:space_list' group.pk %}">Spaces</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Space detail ({{ space.name }})</li>
+        </ol>
+    </nav>
+
     <div>
         Name: {{ space.name }}
     </div>

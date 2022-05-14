@@ -6,6 +6,19 @@
 {% endblock %}
 
 {% block body_content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'commons:main' %}">Main</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'users:group' %}">Group list</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'users:group_detail' group.pk %}">Group main</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'reservations:space_list' group.pk %}">Spaces</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'reservations:space_detail' group.pk space.pk %}">
+                Space detail
+            </a></li>
+            <li class="breadcrumb-item active" aria-current="page">Space info update</li>
+        </ol>
+    </nav>
+
     <form action="{% url 'reservations:space_create' group.pk %}" method="post">
         {% csrf_token %}
         <select class="form-select" name="term">
