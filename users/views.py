@@ -200,6 +200,12 @@ def group_manage_view(request, *args, **kwargs):
 
         try:
             group.name = name
+
+            # 비공개 상태에서 공개 상태로 수정하려는 경우, 모든 가입 요청을 수락한다.
+            if not group.is_public and is_public:
+                for join_request in group.arrived_join_requests.all():
+                    join_request.accept()
+
             group.is_public = is_public
             group.save()
         except IntegrityError:
