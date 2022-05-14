@@ -26,10 +26,6 @@
             <label for="termTitleInput" class="form-label">Space name</label>
             <input type="text" class="form-control" id="termTitleInput" name="name" value="{{ space.name }}" required>
         </div>
-        <div class="mb-3">
-            <label for="termBodyInput" class="form-label">Content</label>
-            <textarea class="form-control" id="termBodyInput" rows="3" name="body">{{ space.body }}</textarea>
-        </div>
         <input type="submit" value="Create!">
     </form>
 {% endblock %}
