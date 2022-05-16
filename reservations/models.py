@@ -57,8 +57,9 @@ class Reservation(models.Model):
     예약 내역
     - Reservation : Space = N : 1 (한 공간에 여러 예약 내역이 있을 수 있으므로)
     - Reservation : SystemUser = N : 1 (한 사용자가 여러 건의 예약을 할 수 있으므로)
-    - Reservation : PermissionTag : N : M (예약이 여러 개의 권한을 요구할 수도 있고, 권한이 여러 예약에서 요구될 수 있으므로)
     """
+    created_at = models.DateTimeField('생성 일시', auto_now_add=True)
+
     space = models.ForeignKey(Space, null=False, on_delete=models.CASCADE,
                               verbose_name='대상 공간', related_name='reservations_as_space')
 
