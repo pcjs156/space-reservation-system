@@ -147,11 +147,7 @@ class SignupView(View):
             self.context['error_message'] = '모든 필드를 입력해 주세요.'
         else:
             try:
-                user = SystemUser.objects.create(
-                    username=username, email=email, nickname=nickname
-                )
-                user.set_password(password)
-                user.save()
+                user = SystemUser.signup(username=username, password=password, email=email, nickname=nickname)
             except IntegrityError as e:
                 if SystemUser.objects.filter(username=username).exists():
                     self.context['error_message'] = '이미 사용중인 ID입니다.'
@@ -196,8 +192,7 @@ class ModifyAccountInfoView(ViewWithContext):
             self.context['modify_failed'] = True
             self.context['toast_message'] = 'Nickname is empty.'
         else:
-            request.user.nickname = new_nickname
-            request.user.save()
+            request.user.update_info(nickname=new_nickname)
             self.context['modify_failed'] = False
             self.context['toast_message'] = 'Modified!'
 
@@ -219,20 +214,7 @@ class GroupListView(ViewWithContext):
         """
         생성/조회 요청 상관 없이 항상 그룹 목록을 보여주어야 함
         """
-        # 해당 사용자가 소속된 그룹을 모두 가져옴
-        _groups = request.user.belonged_groups.all()
-
-        # 그룹 매니저로 등록되어 있는 그룹은 따로 보여주어야 함
-        groups_as_manager = list()
-        # 그룹 매니저로 등록되어 있지 않은 그룹도 따로 분리함
-        groups_as_member = list()
-
-        for group in _groups:
-            if group.manager == request.user:
-                groups_as_manager.append(group)
-            else:
-                groups_as_member.append(group)
-
+        groups_as_manager, groups_as_member = request.user.classify_group_list()
         self.context['groups_as_manager'] = groups_as_manager
         self.context['groups_as_member'] = groups_as_member
 
@@ -322,15 +304,7 @@ class GroupManageView(ManagerOnlyView):
         self.context['is_modify_failed'] = False
 
         try:
-            self.group.name = name
-
-            # 비공개 상태에서 공개 상태로 수정하려는 경우, 모든 가입 요청을 수락한다.
-            if not self.group.is_public and is_public:
-                for join_request in self.group.arrived_join_requests.all():
-                    join_request.accept()
-
-            self.group.is_public = is_public
-            self.group.save()
+            self.group.update_info(name=name, is_public=is_public)
         except IntegrityError:
             self.context['is_modify_failed'] = True
             self.context['modify_fail_message'] = 'This group name is already used.'
@@ -536,49 +510,27 @@ class GroupMemberPermissionView(ManagerOnlyView):
 
     def get(self, request, *args, **kwargs):
         target_member_pk = kwargs['member_pk']
-        self.target_member = self.group.member_check(target_member_pk)
-        self.context['member'] = self.target_member
+        target_member = self.group.member_check(target_member_pk)
 
+        self.context['member'] = target_member
         self.context['tag_edit'] = False
         self.context['permission_str'] = ' '.join(
-            map(lambda t: t.body, self.target_member.get_permission_tags_in_group(self.group)))
+            map(lambda t: t.body, target_member.get_permission_tags_in_group(self.group)))
 
         return render(request, 'users/group_member_permission.html', self.context)
 
     def post(self, request, *args, **kwargs):
         target_member_pk = kwargs['member_pk']
-        self.target_member = self.group.member_check(target_member_pk)
-        self.context['member'] = self.target_member
+        target_member = self.group.member_check(target_member_pk)
 
+        self.context['member'] = target_member
         self.context['tag_edit'] = True
 
         permission_tag_str = request.POST.get('permission_str', '')
-        tag_bodies = permission_tag_str.split()
-
-        with transaction.atomic():
-            prev_tags = set(self.target_member.get_permission_tags_in_group(self.group))
-
-            for body in tag_bodies:
-                tag, is_created = PermissionTag.objects.get_or_create(group=self.group, body=body)
-
-                if is_created:
-                    tag.members.add(self.target_member)
-                    tag.save()
-                else:
-                    # 원래 멤버가 사용하던 태그는 prev_tags에서 지워줌
-                    # (남은 태그들 중 해당 멤버만 사용하던 태그가 있으면 삭제할 것)
-                    if tag in prev_tags:
-                        prev_tags.remove(tag)
-                    else:
-                        tag.members.add(self.target_member)
-
-            # 더이상 사용하지 않는 태그에서 해당 멤버를 삭제
-            for tag in prev_tags:
-                tag.members.remove(self.target_member)
-                tag.save()
+        updated_permission_tags = request.user.updated_permission_tags(self.group, permission_tag_str)
 
         self.context['permission_str'] = ' '.join(
-            map(lambda t: t.body, self.target_member.get_permission_tags_in_group(self.group))
+            map(lambda t: t.body, updated_permission_tags)
         )
 
         return render(request, 'users/group_member_permission.html', self.context)
@@ -591,11 +543,9 @@ class GroupManagerHandoverView(ManagerOnlyView):
 
     def post(self, request, *args, **kwargs):
         target_member_pk = kwargs['member_pk']
-
         target_member = self.group.member_check(target_member_pk)
 
-        self.group.manager = target_member
-        self.group.save()
+        self.group.handover_group_manager(target_member)
 
         return redirect('users:group_detail', group_pk=self.group.pk)
 
