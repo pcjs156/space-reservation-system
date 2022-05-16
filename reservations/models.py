@@ -11,7 +11,6 @@ class Term(models.Model):
     - Term : Space = 1 : N (한 약관은 여러 공간에서 사용될 수 있으므로)
     """
     created_at = models.DateTimeField('생성 일시', auto_now_add=True)
-    modified_at = models.DateTimeField('수정 일시', auto_now=True)
 
     group = models.ForeignKey(Group, null=False, on_delete=models.CASCADE,
                               verbose_name='대상 그룹', related_name='registered_terms')
