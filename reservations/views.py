@@ -8,27 +8,6 @@ from users.models import PermissionTag
 from users.views import ManagerOnlyView, MemberOnlyView
 
 
-class FindingTerm:
-    def init_term(self, request, *args, **kwargs):
-        target_term = get_object_or_404(Term, pk=kwargs['term_pk'])
-        self.term = target_term
-        self.context['term'] = self.term
-
-
-class FindingSpace:
-    def init_space(self, request, *args, **kwargs):
-        target_space = get_object_or_404(Space, pk=kwargs['space_pk'])
-        self.space = target_space
-        self.context['space'] = self.space
-
-
-class FindingReservation:
-    def init_reservation(self, request, *args, **kwargs):
-        target_reservation = get_object_or_404(Reservation, pk=kwargs['reservation_pk'])
-        self.reservation = target_reservation
-        self.context['reservation'] = self.reservation
-
-
 class TermListView(ManagerOnlyView):
     """
     그룹에 등록된 약관 목록을 조회하는 View
@@ -58,7 +37,7 @@ class TermCreateView(ManagerOnlyView):
         return redirect('reservations:term_list', group_pk=self.group.pk)
 
 
-class TermDeleteView(ManagerOnlyView, FindingTerm):
+class TermDeleteView(ManagerOnlyView, Term.FindingSingleInstance):
     """
     약관 삭제를 수행하는 View
     """
@@ -69,7 +48,7 @@ class TermDeleteView(ManagerOnlyView, FindingTerm):
         return redirect('reservations:term_list', group_pk=self.group.pk)
 
 
-class TermUpdateView(ManagerOnlyView, FindingTerm):
+class TermUpdateView(ManagerOnlyView, Term.FindingSingleInstance):
     """
     약관 갱신을 수행하는 View
     """
@@ -100,7 +79,7 @@ class SpaceListView(MemberOnlyView):
         return render(request, 'reservations/space_list.html', self.context)
 
 
-class SpaceDetailView(MemberOnlyView, FindingSpace):
+class SpaceDetailView(MemberOnlyView, Space.FindingSingleInstance):
     """
     그룹에 등록된 공간의 세부 정보 및 예약 정보를 보여주는 View
     """
@@ -185,7 +164,7 @@ class SpaceCreateView(ManagerOnlyView):
         return redirect('reservations:space_list', group_pk=self.group.pk)
 
 
-class SpaceUpdateView(ManagerOnlyView, FindingSpace):
+class SpaceUpdateView(ManagerOnlyView, Space.FindingSingleInstance):
     """
     공간에 대한 정보의 갱신을 수행하는 View
     """
@@ -228,7 +207,7 @@ class SpaceUpdateView(ManagerOnlyView, FindingSpace):
         return redirect('reservations:space_detail', group_pk=self.group.pk, space_pk=self.space.pk)
 
 
-class SpaceDeleteView(ManagerOnlyView, FindingSpace):
+class SpaceDeleteView(ManagerOnlyView, Space.FindingSingleInstance):
     """
     공간 삭제를 수행하는 View
     """
@@ -239,7 +218,7 @@ class SpaceDeleteView(ManagerOnlyView, FindingSpace):
         return redirect('reservations:space_list', group_pk=self.group.pk)
 
 
-class CreateReservationView(MemberOnlyView, FindingSpace):
+class CreateReservationView(MemberOnlyView, Space.FindingSingleInstance):
     def get(self, request, *args, **kwargs):
         self.init_space(request, *args, **kwargs)
         self.context['blocked'] = False
@@ -314,10 +293,10 @@ class CreateReservationView(MemberOnlyView, FindingSpace):
                                                          dt_from=target_dt,
                                                          dt_to=target_dt + timezone.timedelta(minutes=59))
             return redirect('reservations:reservation_detail',
-                            group_pk=self.group.pk, space_pk=self.space.pk, reservation_pk=self.reservation.pk)
+                            group_pk=self.group.pk, space_pk=self.space.pk, reservation_pk=new_reservation.pk)
 
 
-class ReservationDetailView(MemberOnlyView, FindingSpace, FindingReservation):
+class ReservationDetailView(MemberOnlyView, Space.FindingSingleInstance, Reservation.FindingSingleInstance):
     """
     예약 한 건에 대한 상세 정보 조회를 수행하는 View
     """
@@ -328,7 +307,7 @@ class ReservationDetailView(MemberOnlyView, FindingSpace, FindingReservation):
         return render(request, 'reservations/reservation_detail.html', self.context)
 
 
-class ReservationDeleteView(MemberOnlyView, FindingSpace):
+class ReservationDeleteView(MemberOnlyView, Space.FindingSingleInstance):
     """
     예약 삭제를 수행하는 View
     """

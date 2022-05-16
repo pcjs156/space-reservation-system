@@ -1,4 +1,5 @@
 from django.db import models
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from users.models import Group, SystemUser, PermissionTag
@@ -21,6 +22,12 @@ class Term(models.Model):
     class Meta:
         verbose_name = '약관'
         verbose_name_plural = '약관 목록'
+
+    class FindingSingleInstance:
+        def init_term(self, request, *args, **kwargs):
+            target_term = get_object_or_404(Term, pk=kwargs['term_pk'])
+            self.term = target_term
+            self.context['term'] = self.term
 
 
 class Space(models.Model):
@@ -51,6 +58,12 @@ class Space(models.Model):
         verbose_name = '공간'
         verbose_name_plural = '공간 목록'
 
+    class FindingSingleInstance:
+        def init_space(self, request, *args, **kwargs):
+            target_space = get_object_or_404(Space, pk=kwargs['space_pk'])
+            self.space = target_space
+            self.context['space'] = self.space
+
 
 class Reservation(models.Model):
     """
@@ -74,6 +87,12 @@ class Reservation(models.Model):
     class Meta:
         verbose_name = '예약'
         verbose_name_plural = '예약 목록'
+
+    class FindingSingleInstance:
+        def init_reservation(self, request, *args, **kwargs):
+            target_reservation = get_object_or_404(Reservation, pk=kwargs['reservation_pk'])
+            self.reservation = target_reservation
+            self.context['reservation'] = self.reservation
 
     def __str__(self):
         return self.member.username
