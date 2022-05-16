@@ -83,15 +83,16 @@
                     <form action="{% url 'users:group_delete' group.pk %}" method="post">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <div>To delete this group permanently, Type group name <b>{{ group.name }}</b> below.</div>
+                            {#                            <div>To delete this group permanently, Type group name <b>{{ group.name }}</b> below.</div>#}
+                            <div>This operation cannot be canceled!</div>
                         </div>
-                        <div class="mb-3">
-                            <input type="text" class="form-control" id="groupNameInput"
-                                   name="name" placeholder="{{ group.name }}" required>
-                        </div>
+{#                        <div class="mb-3">#}
+{#                            <input type="text" class="form-control" id="groupNameInput"#}
+{#                                   name="name" placeholder="{{ group.name }}" required>#}
+{#                        </div>#}
                         <div class="modal-footer">
                             <input id="groupDeleteConfirmBtn" type="submit"
-                                   class="btn btn-danger" value="Delete" disabled/>
+                                   class="btn btn-danger" value="Delete"/>
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No!</button>
                         </div>
                     </form>
