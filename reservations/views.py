@@ -1,146 +1,167 @@
 from django.http import Http404
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 
 from commons.views import handler_500_view
 from reservations.models import Term, Space, Reservation
-from users.decorators import group_manager_only, group_member_only
 from users.models import PermissionTag
+from users.views import ManagerOnlyView, MemberOnlyView
 
 
-@group_manager_only
-def term_list_view(request, *args, **kwargs):
-    context = dict()
-    group = kwargs['group']
-    context['group'] = group
-
-    registered_terms = group.registered_terms.all()
-    context['registered_terms'] = registered_terms
-
-    return render(request, 'reservations/term_list.html', context)
+class FindingTerm:
+    def init_term(self, request, *args, **kwargs):
+        target_term = get_object_or_404(Term, pk=kwargs['term_pk'])
+        self.term = target_term
+        self.context['term'] = self.term
 
 
-@group_manager_only
-def term_create_view(request, *args, **kwargs):
-    context = dict()
-    group = kwargs['group']
-    context['group'] = group
+class FindingSpace:
+    def init_space(self, request, *args, **kwargs):
+        target_space = get_object_or_404(Space, pk=kwargs['space_pk'])
+        self.space = target_space
+        self.context['space'] = self.space
 
-    if request.method == 'GET':
-        return render(request, 'reservations/term_create.html', context)
 
-    elif request.method == 'POST':
+class FindingReservation:
+    def init_reservation(self, request, *args, **kwargs):
+        target_reservation = get_object_or_404(Reservation, pk=kwargs['reservation_pk'])
+        self.reservation = target_reservation
+        self.context['reservation'] = self.reservation
+
+
+class TermListView(ManagerOnlyView):
+    """
+    그룹에 등록된 약관 목록을 조회하는 View
+    """
+
+    def get(self, request, *args, **kwargs):
+        registered_terms = self.group.registered_terms.all()
+        self.context['registered_terms'] = registered_terms
+
+        return render(request, 'reservations/term_list.html', self.context)
+
+
+class TermCreateView(ManagerOnlyView):
+    """
+    약관 생성을 수행하는 View
+    """
+
+    def get(self, request, *args, **kwargs):
+        return render(request, 'reservations/term_create.html', self.context)
+
+    def post(self, request, *args, **kwargs):
         title = request.POST['title']
         body = request.POST['body']
 
-        Term.objects.create(group=group, title=title, body=body)
+        Term.objects.create(group=self.group, title=title, body=body)
 
-        return term_list_view(request, *args, **kwargs)
-
-
-@group_manager_only
-def term_delete_view(request, *args, **kwargs):
-    target_term = get_object_or_404(Term, pk=kwargs['term_pk'])
-    target_term.delete()
-    return term_list_view(request, *args, **kwargs)
+        return redirect('reservations:term_list', group_pk=self.group.pk)
 
 
-@group_manager_only
-def term_update_view(request, *args, **kwargs):
-    target_term = get_object_or_404(Term, pk=kwargs['term_pk'])
+class TermDeleteView(ManagerOnlyView, FindingTerm):
+    """
+    약관 삭제를 수행하는 View
+    """
 
-    if request.method == 'GET':
-        context = dict()
+    def get(self, request, *args, **kwargs):
+        self.init_term(request, *args, **kwargs)
+        self.target_term.delete()
+        return redirect('reservations:term_list', group_pk=self.group.pk)
 
-        context['group'] = kwargs['group']
-        context['target_term'] = target_term
 
-        return render(request, 'reservations/term_update.html', context)
+class TermUpdateView(ManagerOnlyView, FindingTerm):
+    """
+    약관 갱신을 수행하는 View
+    """
 
-    elif request.method == 'POST':
+    def get(self, request, *args, **kwargs):
+        self.init_term(request, *args, **kwargs)
+        return render(request, 'reservations/term_update.html', self.context)
+
+    def post(self, request, *args, **kwargs):
+        self.init_term(request, *args, **kwargs)
+
         new_title = request.POST['title']
         new_body = request.POST['body']
 
-        target_term = get_object_or_404(Term, pk=kwargs['term_pk'])
-        target_term.title = new_title
-        target_term.body = new_body
-        target_term.save()
+        self.target_term.title = new_title
+        self.target_term.body = new_body
+        self.target_term.save()
 
-        return term_list_view(request, *args, **kwargs)
-
-
-@group_member_only
-def space_list_view(request, *args, **kwargs):
-    context = dict()
-    context['group'] = kwargs['group']
-
-    return render(request, 'reservations/space_list.html', context)
+        return redirect('reservations:term_list', group_pk=self.group.pk)
 
 
-@group_member_only
-def space_detail_view(request, *args, **kwargs):
-    space_pk = kwargs['space_pk']
-    space = get_object_or_404(Space, group=kwargs['group'], pk=space_pk)
+class SpaceListView(MemberOnlyView):
+    """
+    그룹에 등록된 공간 목록을 보여주는 View
+    """
 
-    group = kwargs['group']
-
-    context = dict()
-    context['group'] = group
-    context['space'] = space
-
-    year = request.GET.get('year')
-    month = request.GET.get('month')
-    day = request.GET.get('day')
-
-    target_day = Reservation.get_datetime(year, month, day)
-    if target_day is None:
-        raise Http404()
-
-    reservation_of_week = Reservation.get_reservation_of_week(target_day, space)
-    context['reservation_of_week'] = reservation_of_week
-    context['hour_24'] = list(range(24))
-    context['weekday_7'] = list(range(7))
-
-    time_index = [
-        ('AM' if i < 12 else 'PM') +
-        '{:0>2s}'.format(str(i if i <= 12 else i % 12)) + ':00' for i in range(24)
-    ]
-    context['time_index'] = time_index
-
-    monday = target_day - timezone.timedelta(days=target_day.weekday())
-    sunday = monday + timezone.timedelta(days=7)
-    context['monday'] = monday
-    context['sunday'] = sunday
-    context['monday_dt'] = monday.strftime('%Y/%m/%d')
-    context['sunday_dt'] = sunday.strftime('%Y/%m/%d')
-
-    prev_monday = monday - timezone.timedelta(days=7)
-    context['prev_monday_querystring'] = f"year={prev_monday.year}&month={prev_monday.month}&day={prev_monday.day}"
-    next_monday = monday + timezone.timedelta(days=7)
-    context['next_monday_querystring'] = f"year={next_monday.year}&month={next_monday.month}&day={next_monday.day}"
-
-    today = timezone.now()
-    context['today_querystring'] = f"year={today.year}&month={today.month}&day={today.day}"
-
-    return render(request, 'reservations/space_detail.html', context)
+    def get(self, request, *args, **kwargs):
+        return render(request, 'reservations/space_list.html', self.context)
 
 
-@group_manager_only
-def space_create_view(request, *args, **kwargs):
-    context = dict()
-    group = kwargs['group']
-    context['group'] = group
+class SpaceDetailView(MemberOnlyView, FindingSpace):
+    """
+    그룹에 등록된 공간의 세부 정보 및 예약 정보를 보여주는 View
+    """
 
-    if request.method == 'GET':
-        terms = group.registered_terms.all()
-        context['terms'] = terms
+    def get(self, request, *args, **kwargs):
+        self.init_space(request, *args, **kwargs)
 
-        permission_tags = group.registered_permission_tags.all()
-        context['permission_tags'] = permission_tags
+        year = request.GET.get('year')
+        month = request.GET.get('month')
+        day = request.GET.get('day')
 
-        return render(request, 'reservations/space_create.html', context)
+        target_day = Reservation.get_datetime(year, month, day)
+        if target_day is None:
+            raise Http404()
 
-    elif request.method == 'POST':
+        reservation_of_week = Reservation.get_reservation_of_week(target_day, self.space)
+        self.context['reservation_of_week'] = reservation_of_week
+        self.context['hour_24'] = list(range(24))
+        self.context['weekday_7'] = list(range(7))
+
+        time_index = [
+            ('AM' if i < 12 else 'PM') +
+            '{:0>2s}'.format(str(i if i <= 12 else i % 12)) + ':00' for i in range(24)
+        ]
+        self.context['time_index'] = time_index
+
+        monday = target_day - timezone.timedelta(days=target_day.weekday())
+        sunday = monday + timezone.timedelta(days=7)
+        self.context['monday'] = monday
+        self.context['sunday'] = sunday
+        self.context['monday_dt'] = monday.strftime('%Y/%m/%d')
+        self.context['sunday_dt'] = sunday.strftime('%Y/%m/%d')
+
+        prev_monday = monday - timezone.timedelta(days=7)
+        self.context[
+            'prev_monday_querystring'] = f"year={prev_monday.year}&month={prev_monday.month}&day={prev_monday.day}"
+        next_monday = monday + timezone.timedelta(days=7)
+        self.context[
+            'next_monday_querystring'] = f"year={next_monday.year}&month={next_monday.month}&day={next_monday.day}"
+
+        today = timezone.now()
+        self.context['today_querystring'] = f"year={today.year}&month={today.month}&day={today.day}"
+
+        return render(request, 'reservations/space_detail.html', self.context)
+
+
+class SpaceCreateView(ManagerOnlyView):
+    """
+    공간 생성을 수행하는 View
+    """
+
+    def get(self, request, *args, **kwargs):
+        terms = self.group.registered_terms.all()
+        self.context['terms'] = terms
+
+        permission_tags = self.group.registered_permission_tags.all()
+        self.context['permission_tags'] = permission_tags
+
+        return render(request, 'reservations/space_create.html', self.context)
+
+    def post(self, request, *args, **kwargs):
         term_pk = int(request.POST['term'])
         permission_pk = int(request.POST['permission'])
         name = request.POST['name']
@@ -156,35 +177,35 @@ def space_create_view(request, *args, **kwargs):
             permission_tag = None
 
         Space.objects.create(
-            group=group, term=term, name=name,
+            group=self.group, term=term, name=name,
             term_body='' if term is None else term.body,
             required_permission=permission_tag
         )
 
-        return space_list_view(request, *args, **kwargs)
+        return redirect('reservations:space_list', group_pk=self.group.pk)
 
 
-@group_manager_only
-def space_update_view(request, *args, **kwargs):
-    context = dict()
-    group = kwargs['group']
-    context['group'] = group
+class SpaceUpdateView(ManagerOnlyView, FindingSpace):
+    """
+    공간에 대한 정보의 갱신을 수행하는 View
+    """
 
-    space = get_object_or_404(Space, group=group, pk=int(kwargs['space_pk']))
-    context['space'] = space
+    def get(self, request, *args, **kwargs):
+        self.init_space(request, *args, **kwargs)
 
-    if request.method == 'GET':
-        terms = group.registered_terms.all()
-        context['terms'] = terms
-        context['current_term'] = space.term
+        terms = self.group.registered_terms.all()
+        self.context['terms'] = terms
+        self.context['current_term'] = self.space.term
 
-        permission_tags = group.registered_permission_tags.all()
-        context['permission_tags'] = permission_tags
-        context['current_permission_tag'] = space.required_permission
+        permission_tags = self.group.registered_permission_tags.all()
+        self.context['permission_tags'] = permission_tags
+        self.context['current_permission_tag'] = self.space.required_permission
 
-        return render(request, 'reservations/space_update.html', context)
+        return render(request, 'reservations/space_update.html', self.context)
 
-    elif request.method == 'POST':
+    def post(self, request, *args, **kwargs):
+        self.init_space(request, *args, **kwargs)
+
         term_pk = int(request.POST['term'])
         permission_pk = int(request.POST['permission'])
         new_name = request.POST['name']
@@ -199,48 +220,48 @@ def space_update_view(request, *args, **kwargs):
         else:
             new_permission_tag = None
 
-        space.name = new_name
-        space.term = new_term
-        space.required_permission = new_permission_tag
-        space.save()
+        self.space.name = new_name
+        self.space.term = new_term
+        self.space.required_permission = new_permission_tag
+        self.space.save()
 
-        return space_detail_view(request, *args, **kwargs)
-
-
-@group_manager_only
-def space_delete_view(request, *args, **kwargs):
-    space = get_object_or_404(Space, group=kwargs['group'], pk=int(kwargs['space_pk']))
-    space.delete()
-
-    return space_list_view(request, *args, **kwargs)
+        return redirect('reservations:space_detail', group_pk=self.group.pk, space_pk=self.space.pk)
 
 
-@group_member_only
-def create_reservation_view(request, *args, **kwargs):
-    context = dict()
-    space_pk = kwargs['space_pk']
-    space = get_object_or_404(Space, group=kwargs['group'], pk=space_pk)
-    context['space'] = space
-    context['group'] = kwargs['group']
+class SpaceDeleteView(ManagerOnlyView, FindingSpace):
+    """
+    공간 삭제를 수행하는 View
+    """
 
-    if request.method == 'GET':
-        context['blocked'] = False
-        context['permission_rejected'] = False
+    def get(self, request, *args, **kwargs):
+        self.init_space(request, *args, **kwargs)
+        self.space.delete()
+        return redirect('reservations:space_list', group_pk=self.group.pk)
 
-        valid_blocks = request.user.get_valid_blocks_in_group(kwargs['group'])
+
+class CreateReservationView(MemberOnlyView, FindingSpace):
+    def get(self, request, *args, **kwargs):
+        self.init_space(request, *args, **kwargs)
+        self.context['blocked'] = False
+        self.context['permission_rejected'] = False
+
+        valid_blocks = request.user.get_valid_blocks_in_group(self.group)
+        # 현재 사용 제한이 걸린 경우
         if valid_blocks:
-            context['blocked'] = True
-            context['valid_blocks'] = valid_blocks
-            return render(request, 'reservations/reservation_create.html', context)
-        elif space.required_permission is not None and \
-                space.required_permission not in request.user.get_permission_tags_in_group(kwargs['group']):
-            context['permission_rejected'] = True
-            return render(request, 'reservations/reservation_create.html', context)
+            self.context['blocked'] = True
+            self.context['valid_blocks'] = valid_blocks
+            return render(request, 'reservations/reservation_create.html', self.context)
+        # 사용 권한이 만족되지 않은 경우
+        elif self.space.required_permission is not None and \
+                self.space.required_permission not in request.user.get_permission_tags_in_group(self.group):
+            self.context['permission_rejected'] = True
+            return render(request, 'reservations/reservation_create.html', self.context)
 
+        # 월요일, 그리고 월요일부터 몇일 만큼 떨어진 요일인지를 기준으로 time table을 렌더링함
         monday_year = request.GET.get('monday_year')
         monday_month = request.GET.get('monday_month')
         monday_day = request.GET.get('monday_day')
-        wd = int(request.GET.get('wd'))
+        wd = int(request.GET.get('wd', 0))
         hour = request.GET.get('hour')
 
         target_monday = Reservation.get_datetime(monday_year, monday_month, monday_day)
@@ -256,65 +277,70 @@ def create_reservation_view(request, *args, **kwargs):
             return handler_500_view(request, *args, **kwargs)
 
         target_dt = target_day.replace(hour=hour, minute=0, second=0, microsecond=0)
-        if Reservation.objects.filter(space=space, dt_from__gte=target_dt,
+        # 이미 예약되어 있는 경우
+        if Reservation.objects.filter(space=self.space, dt_from__gte=target_dt,
                                       dt_to__lt=target_dt + timezone.timedelta(hours=1)).exists():
-            context['already_booked'] = True
+            self.context['already_booked'] = True
         else:
-            context['already_booked'] = False
+            self.context['already_booked'] = False
 
-            context['reservation_year'] = target_dt.year
-            context['reservation_month'] = target_dt.month
-            context['reservation_day'] = target_dt.day
-            context['reservation_hour'] = hour
-            context['reservation_weekday'] = '월화수목금토일'[target_dt.weekday()]
+            self.context['reservation_year'] = target_dt.year
+            self.context['reservation_month'] = target_dt.month
+            self.context['reservation_day'] = target_dt.day
+            self.context['reservation_hour'] = hour
+            self.context['reservation_weekday'] = '월화수목금토일'[target_dt.weekday()]
 
-        return render(request, 'reservations/reservation_create.html', context)
-    elif request.method == 'POST':
+        return render(request, 'reservations/reservation_create.html', self.context)
+
+    def post(self, request, *args, **kwargs):
+        self.init_space(request, *args, **kwargs)
+
         year = int(request.POST.get('year'))
         month = int(request.POST.get('month'))
         day = int(request.POST.get('day'))
         hour = int(request.POST.get('hour'))
 
+        # 이미 예약되어 있는 경우
         target_dt = timezone.datetime(year, month, day, hour)
-        if Reservation.objects.filter(space=space,
+        if Reservation.objects.filter(space=self.space,
                                       dt_from__gte=target_dt,
                                       dt_to__lt=target_dt + timezone.timedelta(hours=1)):
-            context['already_booked'] = True
+            self.context['already_booked'] = True
+            self.get(request, *args, **kwargs)
+        # 정상 예약
         else:
-            new_reservation = Reservation.objects.create(space=space, member=request.user,
-                                                         promised_term_body='' if space.term is None else space.term.body,
+            new_reservation = Reservation.objects.create(space=self.space, member=request.user,
+                                                         promised_term_body='' if self.space.term is None else self.space.term.body,
                                                          dt_from=target_dt,
                                                          dt_to=target_dt + timezone.timedelta(minutes=59))
-            kwargs['reservation_pk'] = new_reservation.pk
-            return reservation_detail_view(request, *args, **kwargs)
+            return redirect('reservations:reservation_detail',
+                            group_pk=self.group.pk, space_pk=self.space.pk, reservation_pk=self.reservation.pk)
 
 
-@group_member_only
-def reservation_detail_view(request, *args, **kwargs):
-    context = dict()
+class ReservationDetailView(MemberOnlyView, FindingSpace, FindingReservation):
+    """
+    예약 한 건에 대한 상세 정보 조회를 수행하는 View
+    """
 
-    reservation_pk = int(kwargs['reservation_pk'])
-
-    space_pk = kwargs['space_pk']
-    space = get_object_or_404(Space, pk=space_pk, group=kwargs['group'])
-
-    context['group'] = kwargs['group']
-    context['space'] = space
-    context['reservation'] = get_object_or_404(Reservation, space=space, pk=reservation_pk)
-
-    return render(request, 'reservations/reservation_detail.html', context)
+    def get(self, request, *args, **kwargs):
+        self.init_space(request, *args, **kwargs)
+        self.init_reservation(request, *args, **kwargs)
+        return render(request, 'reservations/reservation_detail.html', self.context)
 
 
-@group_member_only
-def reservation_delete_view(request, *args, **kwargs):
-    space_pk = kwargs['space_pk']
-    space = get_object_or_404(Space, pk=space_pk, group=kwargs['group'])
+class ReservationDeleteView(MemberOnlyView, FindingSpace):
+    """
+    예약 삭제를 수행하는 View
+    """
 
-    reservation_pk = int(kwargs['reservation_pk'])
-    if request.user == kwargs['group'].manager:
-        reservation = get_object_or_404(Reservation, space=space, pk=reservation_pk)
-    else:
-        reservation = get_object_or_404(Reservation, space=space, pk=reservation_pk, member=request.user)
-    reservation.delete()
+    def get(self, request, *args, **kwargs):
+        self.init_space(request, *args, **kwargs)
 
-    return space_detail_view(request, *args, **kwargs)
+        reservation_pk = int(kwargs['reservation_pk'])
+        if request.user == self.group.manager:
+            reservation = get_object_or_404(Reservation, space=self.space, pk=reservation_pk)
+        else:
+            reservation = get_object_or_404(Reservation, space=self.space, pk=reservation_pk, member=request.user)
+        reservation.delete()
+
+        return redirect('reservations:space_detail', group_pk=self.group.pk, space_pk=self.space.pk)

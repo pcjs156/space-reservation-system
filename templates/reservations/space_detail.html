@@ -86,9 +86,6 @@
             </a>
         </div>
     </div>
-    <div>
-        <a href="{% url 'reservations:reservation_create' group.pk space.pk %}">예약</a>
-    </div>
 
     {% if user == group.manager %}
         <div>

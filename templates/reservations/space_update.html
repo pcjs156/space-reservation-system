@@ -19,7 +19,7 @@
         </ol>
     </nav>
 
-    <form action="{% url 'reservations:space_create' group.pk %}" method="post">
+    <form action="{% url 'reservations:space_update' group.pk space.pk %}" method="post">
         {% csrf_token %}
         <select class="form-select" name="term">
             <option value="-1" selected>약관 없음</option>
@@ -39,6 +39,6 @@
             <label for="termTitleInput" class="form-label">Space name</label>
             <input type="text" class="form-control" id="termTitleInput" name="name" value="{{ space.name }}" required>
         </div>
-        <input type="submit" value="Create!">
+        <input type="submit" value="Update!">
     </form>
 {% endblock %}

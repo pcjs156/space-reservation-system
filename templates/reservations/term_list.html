@@ -17,7 +17,7 @@
     <div>
         <ul>
             {% for term in registered_terms %}
-                <li>{{ term.body }} (<a href="{% url 'reservations:term_delete' group.pk term.pk %}">Delete</a>) (<a
+                <li>{{ term.title }} (<a href="{% url 'reservations:term_delete' group.pk term.pk %}">Delete</a>) (<a
                         href="{% url 'reservations:term_update' group.pk term.pk %}">Update</a>)
                 </li>
             {% endfor %}
