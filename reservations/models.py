@@ -188,18 +188,18 @@ class Reservation(models.Model):
                                   dt_to__lt=target_dt + timezone.timedelta(hours=1))
 
     @classmethod
-    def get_reservation_of_week(cls, target_day: timezone.datetime, space: Space) -> List[Dict[int, 'Reservation']]:
+    def get_reservation_of_week(cls, target_dt: timezone.datetime, space: Space) -> List[Dict[int, 'Reservation']]:
         """
         target_day가 포함된 주의 월요일부터 일요일까지의 예약 내역 중 space에 연결된 reservation instance를
         월요일(reservation_per_weekdays[0])부터 일요일(reservation_per_weekdays[6])까지, 한시간 단위로 모아서 반환하는 메서드
-        :param target_day: 검색할 일주일이 포함하는 날짜
+        :param target_dt: 검색할 일주일이 포함하는 날짜
         :param space: Reservation instance를 검색할 space
         :return: 2중첩 리스트(바깥 인덱스: 일주일, 안쪽 인덱스: 0시~23시)
         """
         # target_day의 요일을 구함
-        target_weekday = target_day.weekday()
+        target_weekday = target_dt.weekday()
         # 기준일로부터 월요일, 일요일 날짜를 구함
-        monday_start = target_day - timezone.timedelta(days=target_weekday)
+        monday_start = target_dt - timezone.timedelta(days=target_weekday)
         sunday_end = monday_start + timezone.timedelta(days=7) - timezone.timedelta(seconds=1)
 
         # 기준일이 포함된 일주일 안에 포함되어 있는 Reservation instance들을 검색

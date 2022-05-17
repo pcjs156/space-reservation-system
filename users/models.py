@@ -3,7 +3,7 @@ import random
 from typing import Union, List
 
 from django.db import models, IntegrityError, transaction
-from django.contrib.auth.models import AbstractUser, Group
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinLengthValidator
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -54,7 +54,7 @@ class SystemUser(AbstractUser):
 
         self.save()
 
-    def classify_group_list(self) -> [List[Group], List[Group]]:
+    def classify_group_list(self) -> [List['Group'], List['Group']]:
         """
         해당 사용자가 소속된 그룹을 매니저로써/멤버로써의 소속으로 나누어 각각 반환하는 메서드
         :return: [매니저로 소속된 그룹의 목록, 멤버로 소속된 그룹의 목록]
@@ -75,21 +75,24 @@ class SystemUser(AbstractUser):
 
         return groups_as_manager, groups_as_member
 
-    def get_permission_tags_in_group(self, group: Group) -> List[Group]:
+    def get_permission_tags_in_group(self, group: 'Group') -> List['Group']:
         """
         그룹 내에 등록된 모든 Permission Tag들을 반환하는 메서드
         :param group: 검색 대상 그룹
         :return: group 내에서 해당 멤버에게 주어진 PermissionTag 목록
         """
+        group.member_check(self)
         return self.given_permission_tags.filter(group=group)
 
-    def update_permission_tags(self, group: Group, permission_tag_str: str) -> List[Group]:
+    def update_permission_tags(self, group: 'Group', permission_tag_str: str) -> List['Group']:
         """
         권한 문자열을 전달받아 해당 그룹 내에서의 권한을 갱신하는 메서드
         :param group: 대상 그룹
         :param permission_tag_str: 갱신에 사용할 권한 문자열(space-bar separated)
         :return: 갱신 후 해당 사용자에게 부여된 그룹 내에서의 권한 목록
         """
+        group.member_check(self)
+
         tag_bodies = permission_tag_str.split()
 
         with transaction.atomic():
@@ -119,26 +122,36 @@ class SystemUser(AbstractUser):
         # 갱신 후 다시 조회하여 반환함
         return self.get_permission_tags_in_group(group)
 
-    def get_entire_blocks_in_group(self, group: Group) -> List['Block']:
+    def get_entire_blocks_in_group(self, group: 'Group') -> List['Block']:
         """
         그룹 내에 등록된 모든 Block 내역을 반환하는 메서드
         :param group: 검색 대상 그룹
         :return: group 내에서 해당 멤버에게 주어진 Block 목록
         """
+        group.member_check(self)
         return self.blocks.filter(group=group)
 
-    def get_valid_blocks_in_group(self, group: Group) -> List['Block']:
+    def get_valid_blocks_in_group(self, group: 'Group') -> List['Block']:
         """
         그룹 내에 등록된 현시점에서 유효한 Block 내역을 반환하는 메서드
         :param group: 검색 대상 그룹
         :return: group 내에서 해당 멤버에게 주어진 유효한 Block 목록
         """
 
+        # member checked in get_entire_blocks_in_group
         entire_blocks = self.get_entire_blocks_in_group(group)
         now = timezone.now()
         valid_blocks = entire_blocks.filter(dt_from__lte=now, dt_to__gte=now)
 
         return valid_blocks
+
+    def is_manager(self, group: 'Group') -> bool:
+        """
+        사용자가 해당 group의 manager인지 확인하는 메서드
+        :param group: 매니저를 확인할 그룹
+        :return: 매니저인 경우 True, 그렇지 않을 경우 False
+        """
+        return group.manager == self
 
 
 class Group(models.Model):
@@ -196,7 +209,7 @@ class Group(models.Model):
         self.update_info(manager=target_user)
 
     @classmethod
-    def start_new_group(cls, manager: SystemUser, group_name: str, is_public: bool) -> Group:
+    def start_new_group(cls, manager: SystemUser, group_name: str, is_public: bool) -> 'Group':
         """
         새 그룹을 생성해 반환하는 메서드
 
