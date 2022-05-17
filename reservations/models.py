@@ -69,7 +69,7 @@ class Space(models.Model):
     group = models.ForeignKey(Group, null=False, on_delete=models.CASCADE,
                               verbose_name='소속 그룹', related_name='registered_spaces')
 
-    term = models.ForeignKey(Term, null=True, on_delete=models.PROTECT,
+    term = models.ForeignKey(Term, null=True, on_delete=models.CASCADE,
                              verbose_name='등록 약관', related_name='using_spaces')
 
     name = models.CharField('공간 이름', max_length=255)
@@ -78,7 +78,7 @@ class Space(models.Model):
     # Space instance에 반영할 수 있도록 구현
     term_body = models.TextField('약관 본문', null=True, blank=True)
 
-    required_permission = models.ForeignKey(PermissionTag, on_delete=models.PROTECT, null=True,
+    required_permission = models.ForeignKey(PermissionTag, on_delete=models.CASCADE, null=True,
                                             related_name='requiring_spaces', verbose_name='요구 권한')
 
     class Meta:

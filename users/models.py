@@ -189,11 +189,12 @@ class Group(models.Model):
         if kwargs.get('name'):
             self.name = kwargs['name']
 
-        if kwargs.get('is_public'):
+        if kwargs.get('is_public') is not None:
             # 비공개 상태에서 공개 상태로 수정하려는 경우, 모든 가입 요청을 수락한다.
-            if not self.group.is_public and kwargs.get('is_public'):
-                for join_request in self.group.arrived_join_requests.all():
+            if not self.is_public and kwargs.get('is_public'):
+                for join_request in self.arrived_join_requests.all():
                     join_request.accept()
+            self.is_public = kwargs.get('is_public')
 
         if kwargs.get('manager'):
             new_manager = self.member_check(kwargs['manager'])

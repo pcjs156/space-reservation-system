@@ -91,7 +91,7 @@ class LoginView(ViewWithContext):
 
 
 @method_decorator(login_required, name='dispatch')
-class LogoutView(View):
+class LogoutView(ViewWithContext):
     """
     로그아웃 처리를 수행하는 뷰
     """
@@ -106,7 +106,7 @@ class LogoutView(View):
 
 
 @method_decorator(login_required, name='dispatch')
-class RequestLogoutView(View):
+class RequestLogoutView(ViewWithContext):
     """
     로그인한 사용자가 AnonymousUser만 접근할 수 있는 view에 접근할 경우,
     해당 view로 redirect 되어 logout 요청을 받음
@@ -117,7 +117,7 @@ class RequestLogoutView(View):
 
 
 @method_decorator(anonymous_user_only, name='dispatch')
-class SignupView(View):
+class SignupView(ViewWithContext):
     """
     회원가입 뷰
     """
@@ -527,7 +527,7 @@ class GroupMemberPermissionView(ManagerOnlyView):
         self.context['tag_edit'] = True
 
         permission_tag_str = request.POST.get('permission_str', '')
-        updated_permission_tags = request.user.update_permission_tags(self.group, permission_tag_str)
+        updated_permission_tags = target_member.update_permission_tags(self.group, permission_tag_str)
 
         self.context['permission_str'] = ' '.join(
             map(lambda t: t.body, updated_permission_tags)
