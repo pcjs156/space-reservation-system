@@ -15,9 +15,11 @@
         </ol>
     </nav>
 
-    <div>
-        <a href="{% url 'reservations:space_create' group.pk %}">New space</a>
-    </div>
+    {% if request.user == group.manager %}
+        <div>
+            <a href="{% url 'reservations:space_create' group.pk %}">New space</a>
+        </div>
+    {% endif %}
     <div>
         <ul>
             {% for space in group.registered_spaces.all %}
