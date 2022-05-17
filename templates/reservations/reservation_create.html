@@ -30,7 +30,7 @@
         </div>
     {% elif permission_rejected %}
         <div>권한이 없습니다.</div>
-        <div>요구 권한: {{ space.required_permission }}</div>
+        <div>요구 권한: {{ space.required_permission.body }}</div>
     {% elif already_booked %}
         <div>Can't create reservation!</div>
     {% else %}

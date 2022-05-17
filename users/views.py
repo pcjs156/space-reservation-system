@@ -527,7 +527,7 @@ class GroupMemberPermissionView(ManagerOnlyView):
         self.context['tag_edit'] = True
 
         permission_tag_str = request.POST.get('permission_str', '')
-        updated_permission_tags = request.user.updated_permission_tags(self.group, permission_tag_str)
+        updated_permission_tags = request.user.update_permission_tags(self.group, permission_tag_str)
 
         self.context['permission_str'] = ' '.join(
             map(lambda t: t.body, updated_permission_tags)

@@ -15,17 +15,17 @@
             <li class="breadcrumb-item active" aria-current="page">Term update</li>
         </ol>
     </nav>
-    <form action="{% url 'reservations:term_update' group.pk target_term.pk %}" method="post">
+    <form action="{% url 'reservations:term_update' group.pk term.pk %}" method="post">
         {% csrf_token %}
         <div class="mb-3">
             <label for="termTitleInput" class="form-label">Title</label>
-            <input type="text" class="form-control" id="termTitleInput" name="title" value="{{ target_term.title }}"
+            <input type="text" class="form-control" id="termTitleInput" name="title" value="{{ term.title }}"
                    required>
         </div>
         <div class="mb-3">
             <label for="termBodyInput" class="form-label">Content</label>
             <textarea class="form-control" id="termBodyInput" rows="3" name="body"
-                      required>{{ target_term.body }}</textarea>
+                      required>{{ term.body }}</textarea>
         </div>
         <input type="submit" value="Update!">
     </form>

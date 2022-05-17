@@ -94,14 +94,14 @@ class SystemUser(AbstractUser):
 
         with transaction.atomic():
             # 갱신 이전에 사용자에게 종속된 Permission tag들을 기록해놓음
-            prev_tags = set(self.target_member.get_permission_tags_in_group(self.group))
+            prev_tags = set(self.get_permission_tags_in_group(group))
 
             for body in tag_bodies:
-                tag, is_created = PermissionTag.objects.get_or_create(group=self.group, body=body)
+                tag, is_created = PermissionTag.objects.get_or_create(group=group, body=body)
 
                 # 새로 생성된 태그인 경우 멤버와 연결해줌
                 if is_created:
-                    tag.members.add(self.target_member)
+                    tag.members.add(self)
                     tag.save()
                 else:
                     # 원래 멤버가 사용하던 태그는 prev_tags에서 지워줌
@@ -109,11 +109,11 @@ class SystemUser(AbstractUser):
                     if tag in prev_tags:
                         prev_tags.remove(tag)
                     else:
-                        tag.members.add(self.target_member)
+                        tag.members.add(self)
 
             # 더이상 사용하지 않는 태그에서 해당 멤버를 삭제
             for tag in prev_tags:
-                tag.members.remove(self.target_member)
+                tag.members.remove(self)
                 tag.save()
 
         # 갱신 후 다시 조회하여 반환함

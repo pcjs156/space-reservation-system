@@ -1,4 +1,8 @@
-from django.db import models
+from datetime import datetime
+from typing import List, Dict
+
+from django.contrib.auth.models import Permission
+from django.db import models, IntegrityError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -28,6 +32,29 @@ class Term(models.Model):
             target_term = get_object_or_404(Term, pk=kwargs['term_pk'])
             self.term = target_term
             self.context['term'] = self.term
+
+    @classmethod
+    def create_term(cls, group: Group, title: str, body: str) -> 'Term':
+        """
+        새 term instance를 생성해 반환하는 메서드
+        :param group: 약관을 등록할 그룹
+        :param title: 약관명
+        :param body: 약관 본무
+        :return: 생성된 새 약관
+        """
+        return cls.objects.create(group=group, title=title, body=body)
+
+    def update(self, **kwargs) -> None:
+        """
+        인자를 전달받아 term instance의 정보를 수정하는 메서드
+        그룹 정보의 수정은 지원하지 않는다.
+        """
+        if 'title' in kwargs.keys():
+            self.title = kwargs['title']
+        if 'body' in kwargs.keys():
+            self.body = kwargs['body']
+
+        self.save()
 
 
 class Space(models.Model):
@@ -64,6 +91,37 @@ class Space(models.Model):
             self.space = target_space
             self.context['space'] = self.space
 
+    @classmethod
+    def create_space(cls, name: str, group: Group, term: Term, required_permission: PermissionTag) -> 'Space':
+        """
+        새 space instance를 생성해 반환하는 메서드
+        :param name: 공간명
+        :param group: 공간을 등록할 그룹
+        :param term: 공간에 등록할 약관
+        :param required_permission: 공간에서 예약을 하기 위해 필요한 권한
+        :return: 생성된 새 공간
+        """
+        new_space = cls.objects.create(
+            group=group, term=term, name=name,
+            term_body='' if term is None else term.body,
+            required_permission=required_permission
+        )
+        return new_space
+
+    def update(self, **kwargs) -> None:
+        """
+        인자를 전달받아 space instance의 정보를 수정하는 메서드
+        그룹 정보의 수정은 지원하지 않는다.
+        """
+        if 'name' in kwargs.keys():
+            self.name = kwargs['name']
+        if 'term' in kwargs.keys():
+            self.term = kwargs['term']
+        if 'required_permission' in kwargs.keys():
+            self.required_permission = kwargs['required_permission']
+
+        self.save()
+
 
 class Reservation(models.Model):
     """
@@ -98,16 +156,60 @@ class Reservation(models.Model):
         return self.member.username
 
     @classmethod
-    def get_reservation_of_week(cls, target_day: timezone.datetime, space: Space):
+    def create_reservation(cls, space: Space, member: SystemUser, target_dt: datetime):
+        """
+        새 예약 내역을 생성하는 메서드
+        :param space: 예약을 생성할 공간
+        :param member: 예약자
+        :param target_dt: 예약 시작 일시
+        :return: 생성된 새 예약 내역
+        :raises IntegrityError: 선택된 일시로부터 1시간 간격 안에 예약 내역이 존재하는 경우
+        :raises Http404: member check에 실패한 경우
+        """
+        if cls.already_booked(space, target_dt):
+            raise IntegrityError
+        else:
+            member = space.group.member_check(member)
+            new_reservation = cls.objects.create(space=space, member=member,
+                                                 promised_term_body='' if space.term is None else space.term.body,
+                                                 dt_from=target_dt,
+                                                 dt_to=target_dt + timezone.timedelta(minutes=59))
+            return new_reservation
+
+    @classmethod
+    def already_booked(cls, space: Space, target_dt: datetime) -> bool:
+        """
+        target_dt로 선택된 일시 기준 1시간 이내에 space에 등록된 예약이 있는지 확인하는 메서드
+        :param space: 예약 유무를 검사할 공간
+        :param target_dt: 예약 유무를 검사하기 위한 datetime 객체
+        :return: 예약이 있으면 True, 없으면 False를 반환
+        """
+        return cls.objects.filter(space=space, dt_from__gte=target_dt,
+                                  dt_to__lt=target_dt + timezone.timedelta(hours=1))
+
+    @classmethod
+    def get_reservation_of_week(cls, target_day: timezone.datetime, space: Space) -> List[Dict[int, 'Reservation']]:
+        """
+        target_day가 포함된 주의 월요일부터 일요일까지의 예약 내역 중 space에 연결된 reservation instance를
+        월요일(reservation_per_weekdays[0])부터 일요일(reservation_per_weekdays[6])까지, 한시간 단위로 모아서 반환하는 메서드
+        :param target_day: 검색할 일주일이 포함하는 날짜
+        :param space: Reservation instance를 검색할 space
+        :return: 2중첩 리스트(바깥 인덱스: 일주일, 안쪽 인덱스: 0시~23시)
+        """
+        # target_day의 요일을 구함
         target_weekday = target_day.weekday()
+        # 기준일로부터 월요일, 일요일 날짜를 구함
         monday_start = target_day - timezone.timedelta(days=target_weekday)
         sunday_end = monday_start + timezone.timedelta(days=7) - timezone.timedelta(seconds=1)
 
+        # 기준일이 포함된 일주일 안에 포함되어 있는 Reservation instance들을 검색
         in_range_reservations = Reservation.objects.filter(space=space, dt_from__gte=monday_start,
                                                            dt_to__lte=sunday_end)
 
+        # 날짜별 reservation instance 정리
         reservation_per_weekdays = []
         for i in range(7):
+            # 해당 날짜의 시간대별(1시간 간격) Reservation instance 정리
             tmp = {_h: None for _h in range(24)}
 
             start = monday_start + timezone.timedelta(days=i)
@@ -124,7 +226,11 @@ class Reservation(models.Model):
         return reservation_per_weekdays
 
     @staticmethod
-    def get_datetime(year, month, day):
+    def get_datetime(year, month, day) -> datetime:
+        """
+        year, month, day를 인자로 전달받아 해당 날짜의 0시 0분 0초로 초기화하여 반환하는 메서드
+        인자 중 하나라도 전달되지 않을 경우, 메서드 호출 날짜로 초기화한다.
+        """
         if not (year and month and day):
             target_day = timezone.now()
         else:

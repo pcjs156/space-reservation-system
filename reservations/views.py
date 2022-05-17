@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -32,7 +33,7 @@ class TermCreateView(ManagerOnlyView):
         title = request.POST['title']
         body = request.POST['body']
 
-        Term.objects.create(group=self.group, title=title, body=body)
+        new_term = Term.create_term(group=self.group, title=title, body=body)
 
         return redirect('reservations:term_list', group_pk=self.group.pk)
 
@@ -44,7 +45,7 @@ class TermDeleteView(ManagerOnlyView, Term.FindingSingleInstance):
 
     def get(self, request, *args, **kwargs):
         self.init_term(request, *args, **kwargs)
-        self.target_term.delete()
+        self.term.delete()
         return redirect('reservations:term_list', group_pk=self.group.pk)
 
 
@@ -63,9 +64,7 @@ class TermUpdateView(ManagerOnlyView, Term.FindingSingleInstance):
         new_title = request.POST['title']
         new_body = request.POST['body']
 
-        self.target_term.title = new_title
-        self.target_term.body = new_body
-        self.target_term.save()
+        self.term.update(title=new_title, body=new_body)
 
         return redirect('reservations:term_list', group_pk=self.group.pk)
 
@@ -95,7 +94,10 @@ class SpaceDetailView(MemberOnlyView, Space.FindingSingleInstance):
         if target_day is None:
             raise Http404()
 
+        # target_day가 포함된 주의 reservation instance들을 날짜별, 시간별로 정리
         reservation_of_week = Reservation.get_reservation_of_week(target_day, self.space)
+
+        # 이하 Page rendering에 필요 ==========================================
         self.context['reservation_of_week'] = reservation_of_week
         self.context['hour_24'] = list(range(24))
         self.context['weekday_7'] = list(range(7))
@@ -122,6 +124,7 @@ class SpaceDetailView(MemberOnlyView, Space.FindingSingleInstance):
 
         today = timezone.now()
         self.context['today_querystring'] = f"year={today.year}&month={today.month}&day={today.day}"
+        # 이상 Page rendering에 필요 ==========================================
 
         return render(request, 'reservations/space_detail.html', self.context)
 
@@ -155,11 +158,8 @@ class SpaceCreateView(ManagerOnlyView):
         else:
             permission_tag = None
 
-        Space.objects.create(
-            group=self.group, term=term, name=name,
-            term_body='' if term is None else term.body,
-            required_permission=permission_tag
-        )
+        new_space = Space.create_space(group=self.group, term=term, name=name,
+                                       required_permission=permission_tag)
 
         return redirect('reservations:space_list', group_pk=self.group.pk)
 
@@ -199,10 +199,7 @@ class SpaceUpdateView(ManagerOnlyView, Space.FindingSingleInstance):
         else:
             new_permission_tag = None
 
-        self.space.name = new_name
-        self.space.term = new_term
-        self.space.required_permission = new_permission_tag
-        self.space.save()
+        self.space.update(name=new_name, term=new_term, required_permission=new_permission_tag)
 
         return redirect('reservations:space_detail', group_pk=self.group.pk, space_pk=self.space.pk)
 
@@ -257,8 +254,7 @@ class CreateReservationView(MemberOnlyView, Space.FindingSingleInstance):
 
         target_dt = target_day.replace(hour=hour, minute=0, second=0, microsecond=0)
         # 이미 예약되어 있는 경우
-        if Reservation.objects.filter(space=self.space, dt_from__gte=target_dt,
-                                      dt_to__lt=target_dt + timezone.timedelta(hours=1)).exists():
+        if Reservation.already_booked(space=self.space, target_dt=target_dt) or kwargs.get('already_booked'):
             self.context['already_booked'] = True
         else:
             self.context['already_booked'] = False
@@ -281,17 +277,13 @@ class CreateReservationView(MemberOnlyView, Space.FindingSingleInstance):
 
         # 이미 예약되어 있는 경우
         target_dt = timezone.datetime(year, month, day, hour)
-        if Reservation.objects.filter(space=self.space,
-                                      dt_from__gte=target_dt,
-                                      dt_to__lt=target_dt + timezone.timedelta(hours=1)):
-            self.context['already_booked'] = True
-            self.get(request, *args, **kwargs)
+        try:
+            new_reservation = Reservation.create_reservation(space=self.space, member=request.user, target_dt=target_dt)
+        except IntegrityError:
+            kwargs['already_booked'] = True
+            return self.get(request, *args, **kwargs)
         # 정상 예약
         else:
-            new_reservation = Reservation.objects.create(space=self.space, member=request.user,
-                                                         promised_term_body='' if self.space.term is None else self.space.term.body,
-                                                         dt_from=target_dt,
-                                                         dt_to=target_dt + timezone.timedelta(minutes=59))
             return redirect('reservations:reservation_detail',
                             group_pk=self.group.pk, space_pk=self.space.pk, reservation_pk=new_reservation.pk)
 
