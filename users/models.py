@@ -38,11 +38,9 @@ class SystemUser(AbstractUser):
         :return: 생성된 SystemUser instance
         :raises IntegrityError: unique constraint 위반시
         """
-        user = cls.objects.create(
-            username=username, email=email, nickname=nickname
+        user = cls.objects.create_user(
+            username=username, email=email, password=password, nickname=nickname
         )
-        user.set_password(password)
-        user.save()
         return user
 
     def update_info(self, *args, **kwargs) -> None:
