@@ -235,7 +235,7 @@ class Group(models.Model):
             raise e
 
         # 4. 해당 그룹의 첫 멤버로 그룹 매니저를 등록
-        new_group.members.add(manager)
+        new_group.add_member(manager)
 
         return new_group
 
@@ -254,10 +254,27 @@ class Group(models.Model):
                 break
         return new_invite_code
 
+    def add_member(self, user: SystemUser):
+        """
+        그룹에 새 멤버를 추가하는 메서드
+        :param user: 추가할 멤버
+        :raises IntegrityError: 이미 해당 그룹의 사용자인 경우
+        """
+        try:
+            self.member_check(user)
+        # 해당 그룹의 멤버가 아닌 경우 Http404 발생하므로(Correct case),
+        # 해당 에러를 무시하고 멤버 등록 및 인스턴스 저장을 수행함
+        except Exception:
+            self.members.add(user)
+            self.save()
+        # 해당 그룹의 멤버인 경우 IntegrityError를 발생시킴
+        else:
+            raise IntegrityError('This user is already member of this group.')
+
     def remove_member(self, user: SystemUser):
         """
         그룹으로부터 멤버를 삭제하는 메서드
-        :param user: .삭제할 멤버
+        :param user: 삭제할 멤버
         """
         assert self.members.filter(pk=user.pk).exists()
         assert self.manager != user
@@ -360,8 +377,7 @@ class JoinRequest(models.Model):
         )
 
     def accept(self):
-        self.group.members.add(self.user)
-        self.group.save()
+        self.group.add_member(self.user)
         self.delete()
 
     def reject(self):

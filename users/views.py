@@ -393,8 +393,7 @@ class GroupJoinRequestView(ViewWithContext):
 
             # 공개된 그룹인 경우 바로 멤버로 등록됨
             if group.is_public:
-                group.members.add(request.user)
-                group.save()
+                group.add_member(request.user)
             # 공개되지 않은 그룹인 경우 그룹 등록 요청을 보냄
             else:
                 try:
