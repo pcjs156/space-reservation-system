@@ -228,8 +228,7 @@ class CreateReservationView(MemberOnlyView, Space.FindingSingleInstance):
             self.context['valid_blocks'] = valid_blocks
             return render(request, 'reservations/reservation_create.html', self.context)
         # 사용 권한이 만족되지 않은 경우
-        elif self.space.required_permission is not None and \
-                self.space.required_permission not in request.user.get_permission_tags_in_group(self.group):
+        elif not Space.permission_checker.check(self.space, request.user):
             self.context['permission_rejected'] = True
             return render(request, 'reservations/reservation_create.html', self.context)
 

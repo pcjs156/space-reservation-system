@@ -6,6 +6,7 @@ from django.db import models, IntegrityError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
+from reservations.permission_strategies import SpacePermissionChecker, IncludeSinglePermissionChecker
 from users.models import Group, SystemUser, PermissionTag
 
 
@@ -80,6 +81,8 @@ class Space(models.Model):
 
     required_permission = models.ForeignKey(PermissionTag, on_delete=models.CASCADE, null=True,
                                             related_name='requiring_spaces', verbose_name='요구 권한')
+
+    permission_checker: SpacePermissionChecker = IncludeSinglePermissionChecker()
 
     class Meta:
         verbose_name = '공간'
